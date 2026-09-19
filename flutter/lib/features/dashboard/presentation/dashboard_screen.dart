@@ -4,6 +4,8 @@ import 'package:aethel/core/constants/colors.dart';
 import 'package:aethel/domain/models/models.dart';
 import 'package:aethel/features/dashboard/providers/timeline_provider.dart';
 import 'package:aethel/features/vault/presentation/vault_grid_screen.dart';
+import 'package:aethel/features/auth/providers/auth_provider.dart';
+import 'package:aethel/features/dashboard/providers/sync_provider.dart';
 import 'package:aethel/features/bills_subscriptions/presentation/bills_screen.dart';
 import 'package:aethel/features/focus_blocker/presentation/focus_panel_screen.dart';
 import 'package:aethel/features/settings/presentation/settings_screen.dart';
@@ -25,6 +27,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     FocusPanelScreen(),
     SettingsScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final authState = ref.read(authStateProvider);
+    if (authState.isAuthenticated) {
+      ref.read(syncProvider.notifier).startIfAuthenticated();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

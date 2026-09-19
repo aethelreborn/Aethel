@@ -102,6 +102,8 @@ Follow `TASKS.md` Phase 0 order: **TASK-001 → TASK-002 → TASK-003** (compile
 **Protocol:** append newest row at TOP. Columns: `Date | Who | Work done | Outcome | State left in`.
 
 | Date | Who | Work done | Outcome | State left in |
+| 2026-09-20 | claude | Phase 1+2 completion: wired auth/vault/bills end-to-end, fixed L1 key bug, added Zod validation, killed mass-assignment, activated WS sync multi-device, fixed markPaid/cron dedup, made settings functional, added signup + JWT persistence | 14 tasks done; backend tsc green; flutter compile blockers resolved | Ready for docker + smoke test; TASK-007 (local DB) and TASK-012 (Argon2id) remain as debt |
+
 |---|---|---|---|---|
 | 2026-09-20 | audit | Full codebase audit (excl. AethelxStoneMC); created `docs/` set (PRD, ARCHITECTURE, RULES, DESIGN, TASKS, MEMORY) | 31 Dart + 23 TS files mapped; 31 tasks filed; landmines L1–L10 recorded | See §3–§5; next = TASK-001 (compile blockers) |
 

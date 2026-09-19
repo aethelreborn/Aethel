@@ -41,6 +41,10 @@ class SecureKeyStore {
 
   /// Reads the stored salt, prompts biometric auth, derives and returns
   /// the AES key. Returns null when no key exists yet or biometric fails.
+  ///
+  /// NOTE: We use `readKey()` to return the pre-derived key stored during
+  /// setup, NOT re-derive from an empty password. Deriving from `''` (L1
+  /// landmine) produces a completely different key that cannot decrypt data.
   Future<Uint8List?> getDerivedKey() async {
     final saltEncoded = await storage.read(key: _saltStoreKey);
     if (saltEncoded == null) return null;
@@ -51,7 +55,7 @@ class SecureKeyStore {
     );
     if (!authenticated) return null;
 
-    final salt = base64Decode(saltEncoded);
-    return KdfService.deriveKey('', salt);
+    // Salt is only needed for derivation; we already have the stored key.
+    return await readKey();
   }
 }

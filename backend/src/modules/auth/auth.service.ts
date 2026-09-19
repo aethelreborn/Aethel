@@ -11,11 +11,11 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
       data: { email, passwordHash },
-      select: { id: true, email: true, createdAt: true },
+      select: { id: true, email: true, createdAt: true, tokenVersion: true },
     });
 
-    const accessToken = jwt.sign({ userId: user.id, email: user.email }, env.JWT_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ userId: user.id }, env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+    const accessToken = jwt.sign({ userId: user.id, email: user.email, tokenVersion: user.tokenVersion }, env.JWT_SECRET, { expiresIn: '15m' });
+    const refreshToken = jwt.sign({ userId: user.id, tokenVersion: user.tokenVersion }, env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
 
     return { access_token: accessToken, refresh_token: refreshToken, user };
   }
@@ -27,24 +27,29 @@ export class AuthService {
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) throw new Error('Invalid credentials');
 
-    const accessToken = jwt.sign({ userId: user.id, email: user.email }, env.JWT_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ userId: user.id }, env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+    const accessToken = jwt.sign({ userId: user.id, email: user.email, tokenVersion: user.tokenVersion }, env.JWT_SECRET, { expiresIn: '15m' });
+    const refreshToken = jwt.sign({ userId: user.id, tokenVersion: user.tokenVersion }, env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
 
     return { access_token: accessToken, refresh_token: refreshToken, user: { id: user.id, email: user.email, createdAt: user.createdAt } };
   }
 
   async refreshToken(refreshToken: string) {
     try {
-      const payload = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as { userId: string };
+      const payload = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as { userId: string; tokenVersion: number };
       const user = await prisma.user.findUnique({ where: { id: payload.userId } });
       if (!user) throw new Error('User not found');
+      if (payload.tokenVersion !== user.tokenVersion) throw new Error('Session invalidated — log in again');
 
-      const accessToken = jwt.sign({ userId: user.id, email: user.email }, env.JWT_SECRET, { expiresIn: '15m' });
-      const newRefreshToken = jwt.sign({ userId: user.id }, env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+      const accessToken = jwt.sign({ userId: user.id, email: user.email, tokenVersion: user.tokenVersion }, env.JWT_SECRET, { expiresIn: '15m' });
+      const newRefreshToken = jwt.sign({ userId: user.id, tokenVersion: user.tokenVersion }, env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
 
       return { access_token: accessToken, refresh_token: newRefreshToken, user: { id: user.id, email: user.email, createdAt: user.createdAt } };
     } catch {
       throw new Error('Invalid refresh token');
     }
+  }
+
+  async logout(userId: string) {
+    await prisma.user.update({ where: { id: userId }, data: { tokenVersion: { increment: 1 } } });
   }
 }

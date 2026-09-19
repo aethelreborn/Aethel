@@ -18,8 +18,19 @@ export class SchedulesService {
     });
   }
 
+  // Whitelist: only allow label, start_time, end_time, days_of_week, blocked_apps
   async update(userId: string, id: string, data: any) {
-    return prisma.studySchedule.update({ where: { id, userId }, data });
+    const { label, start_time, end_time, days_of_week, blocked_apps } = data;
+    return prisma.studySchedule.update({
+      where: { id, userId },
+      data: {
+        ...(label !== undefined && { label }),
+        ...(start_time !== undefined && { startTime: new Date(start_time) }),
+        ...(end_time !== undefined && { endTime: new Date(end_time) }),
+        ...(days_of_week !== undefined && { daysOfWeek: days_of_week }),
+        ...(blocked_apps !== undefined && { blockedApps: blocked_apps }),
+      },
+    });
   }
 
   async delete(userId: string, id: string) {

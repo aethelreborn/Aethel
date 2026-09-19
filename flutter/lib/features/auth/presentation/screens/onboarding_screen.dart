@@ -56,6 +56,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 onPressed: () => Navigator.of(context).pushReplacementNamed('/login'),
                 child: const Text('Already have an account? Log in'),
               ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pushReplacementNamed('/signup'),
+                child: const Text('Create Account'),
+              ),
               const SizedBox(height: 16),
             ],
           ),

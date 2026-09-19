@@ -1,0 +1,19 @@
+{
+  "migrationName": "20260920_add_missing_columns",
+  "rollbackSteps": [],
+  "steps": [
+    {
+      "tag": "20260920_add_missing_columns",
+      "finishedAt": "2026-09-20T00:00:00Z",
+      "migrationName": "20260920_add_missing_columns",
+      "logs": []
+    }
+  ],
+  "appliedMigrations": [
+    {
+      "migrationName": "20260920_add_missing_columns",
+      "rolledBackAt": null
+    }
+  ],
+  "detached": []
+}

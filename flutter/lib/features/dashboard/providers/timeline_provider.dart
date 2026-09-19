@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aethel/domain/models/models.dart';
 import 'package:aethel/core/network/api_client.dart';
@@ -7,7 +9,9 @@ final timelineProvider = StateNotifierProvider<TimelineNotifier, AsyncValue<List
 );
 
 class TimelineNotifier extends StateNotifier<AsyncValue<List<TimelineEvent>>> {
-  TimelineNotifier() : super(const AsyncLoading());
+  TimelineNotifier() : super(const AsyncLoading()) {
+    fetch();
+  }
 
   Future<void> fetch() async {
     state = const AsyncLoading();
@@ -37,7 +41,9 @@ final vaultProvider = StateNotifierProvider<VaultNotifier, AsyncValue<List<Vault
 );
 
 class VaultNotifier extends StateNotifier<AsyncValue<List<VaultEntry>>> {
-  VaultNotifier() : super(const AsyncLoading());
+  VaultNotifier() : super(const AsyncLoading()) {
+    fetch();
+  }
 
   Future<void> fetch() async {
     state = const AsyncLoading();
@@ -67,7 +73,9 @@ final billingProvider = StateNotifierProvider<BillingNotifier, AsyncValue<List<B
 );
 
 class BillingNotifier extends StateNotifier<AsyncValue<List<BillingEntry>>> {
-  BillingNotifier() : super(const AsyncLoading());
+  BillingNotifier() : super(const AsyncLoading()) {
+    fetch();
+  }
 
   Future<void> fetch() async {
     state = const AsyncLoading();

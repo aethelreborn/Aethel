@@ -9,7 +9,8 @@ interface ConnectedClient extends WebSocket {
 
 export class SyncGateway {
   private wss: WebSocketServer;
-  private clients: Map<string, ConnectedClient> = new Map();
+  // Map<userId, Set<ConnectedClient>> — supports multi-device fan-out
+  private clients: Map<string, Set<ConnectedClient>> = new Map();
 
   constructor(port: number) {
     this.wss = new WebSocketServer({ port });
@@ -17,23 +18,45 @@ export class SyncGateway {
     this.wss.on('connection', (incomingWs, req) => {
       const ws = incomingWs as ConnectedClient;
 
-      // Extract token from URL query param (?token=<JWT>) — this is how the
-      // Flutter client sends it; cookie parsing is unreliable across platforms.
+      // Extract token from URL query param (?token=<JWT>)
       const url = req.url ?? '';
       const tokenMatch = url.match(/[?&]token=([^&]+)/);
       const token = tokenMatch ? decodeURIComponent(tokenMatch[1]) : null;
 
-      if (token) {
-        try {
-          const payload = jwt.verify(token, env.JWT_SECRET) as { userId: string };
-          ws.userId = payload.userId;
-          this.clients.set(payload.userId, ws);
-          console.log(`[WS] User ${payload.userId} connected`);
-        } catch {
-          incomingWs.close();
+      if (!token) {
+        // No token at all — close immediately
+        incomingWs.close(1008, 'Missing authentication token');
+        return;
+      }
+
+      try {
+        const payload = jwt.verify(token, env.JWT_SECRET) as { userId: string };
+        ws.userId = payload.userId;
+
+        // Add to set (create set if first device for this user)
+        let userSet = this.clients.get(payload.userId);
+        if (!userSet) {
+          userSet = new Set<ConnectedClient>();
+          this.clients.set(payload.userId, userSet);
         }
-      } else {
-        incomingWs.close();
+        userSet.add(ws);
+
+        console.log(`[WS] User ${payload.userId} connected`);
+
+        // Handle close/error — remove from set
+        ws.on('close', () => {
+          this.removeClient(payload.userId, ws);
+          console.log(`[WS] User ${payload.userId} disconnected`);
+        });
+        ws.on('error', (err) => {
+          console.error(`[WS] User ${payload.userId} error:`, err.message);
+          this.removeClient(payload.userId, ws);
+        });
+
+      } catch (e) {
+        // Invalid/expired token — close immediately
+        console.log(`[WS] Authentication failed, closing connection`);
+        incomingWs.close(1008, 'Invalid or expired token');
       }
     });
 
@@ -42,10 +65,25 @@ export class SyncGateway {
     });
   }
 
+  private removeClient(userId: string, ws: ConnectedClient) {
+    const userSet = this.clients.get(userId);
+    if (userSet) {
+      userSet.delete(ws);
+      if (userSet.size === 0) {
+        this.clients.delete(userId);
+      }
+    }
+  }
+
   broadcast(userId: string, event: string, data: any) {
-    const client = this.clients.get(userId);
-    if (client && client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ event, data }));
+    const userSet = this.clients.get(userId);
+    if (!userSet || userSet.size === 0) return;
+
+    const payload = JSON.stringify({ event, data });
+    for (const ws of userSet) {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(payload);
+      }
     }
   }
 
@@ -55,8 +93,6 @@ export class SyncGateway {
 }
 
 // ── Singleton instance ────────────────────────────────────────────────────────
-// Exported so modules (vault.service, billing.service) can import and broadcast
-// events. The real WebSocket port is set via [init()] called from server.ts.
 let _instance: SyncGateway | null = null;
 
 export function getSyncGateway(): SyncGateway {

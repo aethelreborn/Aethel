@@ -1,5 +1,6 @@
 import { prisma } from '../../config/db.js';
 import { syncGateway } from '../../websocket/syncGateway.js';
+import { addDays, addWeeks, addMonths } from 'date-fns';
 
 export class BillingService {
   async findByUser(userId: string) {
@@ -25,11 +26,22 @@ export class BillingService {
     const item = await prisma.billingItem.findFirst({ where: { id, userId } });
     if (!item) throw new Error('Not found');
 
-    const cycleDays: Record<string, number> = { DAILY: 1, WEEKLY: 7, BIWEEKLY: 14, MONTHLY: 30, QUARTERLY: 90, YEARLY: 365 };
-    const days = cycleDays[item.billingCycle || 'MONTHLY'] || 30;
-    const nextDate = item.nextDueDate ? new Date(item.nextDueDate.getTime() + days * 24 * 60 * 60 * 1000) : null;
+    let nextDate: Date | null = null;
+    if (item.nextDueDate && item.billingCycle) {
+      switch (item.billingCycle) {
+        case 'DAILY':     nextDate = addDays(item.nextDueDate, 1); break;
+        case 'WEEKLY':    nextDate = addWeeks(item.nextDueDate, 1); break;
+        case 'BIWEEKLY':  nextDate = addWeeks(item.nextDueDate, 2); break;
+        case 'MONTHLY':   nextDate = addMonths(item.nextDueDate, 1); break;
+        case 'QUARTERLY': nextDate = addMonths(item.nextDueDate, 3); break;
+        case 'YEARLY':    nextDate = addMonths(item.nextDueDate, 12); break;
+      }
+    }
 
-    const updated = await prisma.billingItem.update({ where: { id, userId }, data: { lastNotifiedAt: new Date(), nextDueDate: nextDate } });
+    const updated = await prisma.billingItem.update({
+      where: { id, userId },
+      data: { paidAt: new Date(), nextDueDate: nextDate },
+    });
     syncGateway.broadcast(userId, 'billing.marked_paid', updated);
     return updated;
   }

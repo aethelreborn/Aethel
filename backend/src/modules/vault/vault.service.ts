@@ -25,7 +25,16 @@ export class VaultService {
   }
 
   async update(userId: string, id: string, data: any) {
-    const item = await prisma.vaultItem.update({ where: { id, userId }, data });
+    // Whitelist: prevent mass-assignment of userId, createdAt, updatedAt, etc.
+    const item = await prisma.vaultItem.update({
+      where: { id, userId },
+      data: {
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.encrypted_payload !== undefined && { encryptedPayload: data.encrypted_payload }),
+        ...(data.iv !== undefined && { iv: data.iv }),
+        ...(data.item_type !== undefined && { itemType: data.item_type }),
+      },
+    });
     syncGateway.broadcast(userId, 'vault.updated', item);
     return item;
   }

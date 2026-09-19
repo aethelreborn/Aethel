@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:aethel/core/constants/colors.dart';
+import 'schedule_editor_screen.dart';
 
 class FocusPanelScreen extends StatefulWidget {
   const FocusPanelScreen({super.key});
@@ -10,13 +13,33 @@ class FocusPanelScreen extends StatefulWidget {
 class _FocusPanelScreenState extends State<FocusPanelScreen> {
   bool _active = false;
   int _secondsLeft = 0;
+  Timer? _timer;
 
   void _startBlock(int minutes) {
+    _timer?.cancel();
     setState(() { _active = true; _secondsLeft = minutes * 60; });
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (_secondsLeft <= 1) {
+          _timer?.cancel();
+          _active = false;
+          _secondsLeft = 0;
+        } else {
+          _secondsLeft--;
+        }
+      });
+    });
   }
 
   void _endBlock() {
+    _timer?.cancel();
     setState(() { _active = false; _secondsLeft = 0; });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -52,7 +75,12 @@ class _FocusPanelScreenState extends State<FocusPanelScreen> {
           child: Row(children: [Icon(Icons.block, color: AppColors.urgentLight), const SizedBox(width: 12), Text(app, style: const TextStyle(fontWeight: FontWeight.w500)), const Spacer(), Switch(value: true, onChanged: (_) {})]),
         )),
         const SizedBox(height: 24),
-        ElevatedButton(onPressed: () {}, child: const Text('Manage Schedules')),
+        ElevatedButton(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ScheduleEditorScreen()),
+          ),
+          child: const Text('Manage Schedules'),
+        ),
       ]))),
     );
   }

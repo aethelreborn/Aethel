@@ -33,6 +33,7 @@ model User {
   id            String              @id @default(uuid())
   email         String              @unique
   passwordHash  String
+  tokenVersion  Int                 @default(0) @map("token_version")
   createdAt     DateTime            @default(now()) @map("created_at")
 
   vaultItems       VaultItem[]
@@ -68,10 +69,14 @@ model BillingItem {
   amountDue      Decimal       @map("amount_due")
   nextDueDate    DateTime?     @map("next_due_date")
   billingCycle   BillingCycle? @map("billing_cycle")
+  snoozedUntil   DateTime?     @map("snoozed_until")
   lastNotifiedAt DateTime?     @map("last_notified_at")
+  paidAt         DateTime?     @map("paid_at")
   isActive       Boolean       @default(true)  @map("is_active")
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  priceHistories PriceHistory[]
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -79,16 +84,30 @@ model BillingItem {
   @@map("billing_items")
 }
 
+model PriceHistory {
+  id             String      @id @default(uuid())
+  billingItemId  String      @map("billing_item_id")
+  oldAmount      Decimal     @map("old_amount")
+  newAmount      Decimal     @map("new_amount")
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  billingItem BillingItem @relation(fields: [billingItemId], references: [id], onDelete: Cascade)
+
+  @@index([billingItemId], name: "price_histories_billingItemId_idx")
+  @@map("price_history")
+}
+
 model StudySchedule {
-  id           String   @id @default(uuid())
-  userId       String   @map("user_id")
-  label        String
-  startTime    DateTime @map("start_time")
-  endTime      DateTime @map("end_time")
-  daysOfWeek   Int[]    @map("days_of_week") // 0=Sun .. 6=Sat
-  blockedApps  String[] @map("blocked_apps")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  label          String
+  startTime      DateTime  @map("start_time")
+  endTime        DateTime  @map("end_time")
+  daysOfWeek     Int[]     @map("days_of_week")
+  blockedApps    String[]  @map("blocked_apps")
+  lastNotifiedAt DateTime? @map("last_notified_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -100,7 +119,7 @@ model Device {
   id         String   @id @default(uuid())
   userId     String   @map("user_id")
   pushToken  String   @map("push_token")
-  platform   String   // "android" | "ios"
+  platform   String
   createdAt  DateTime @default(now()) @map("created_at")
   lastActive DateTime @default(now()) @map("last_active")
 
@@ -113,7 +132,8 @@ model Device {
 model NotificationLog {
   id         String   @id @default(uuid())
   userId     String   @map("user_id")
-  channel    String   // "push_apns" | "push_fcm" | "in_app"
+  channel    String
+  message    String?
   sentAt     DateTime @default(now()) @map("sent_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

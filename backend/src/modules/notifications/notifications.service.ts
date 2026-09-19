@@ -41,11 +41,12 @@ export async function unregisterDevice(
 
 export async function sendPushNotification(userId: string, payload: { title: string; body: string }) {
   const devices = await prisma.device.findMany({ where: { userId } });
-  console.log(`[push] User ${userId}: ${payload.title} -> ${devices.length} device(s)`);
+  console.log('[push] User ' + userId + ': ' + payload.title + ' -> ' + devices.length + ' device(s)');
   await prisma.notificationLog.createMany({
     data: devices.map((d) => ({
       userId,
       channel: d.platform === 'ios' ? 'push_apns' : 'push_fcm',
+      message: JSON.stringify({ title: payload.title, body: payload.body }),
     })),
   });
   return devices.length;

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 const String kApiBaseUrl = String.fromEnvironment(
   'AETHEL_API_URL',
@@ -53,6 +54,9 @@ class ApiClient {
   static Future<void> setTokens(String access, String refresh) async {
     _accessToken = access;
     _refreshToken = refresh;
+    const storage = FlutterSecureStorage();
+    await storage.write(key: 'jwt_access', value: access);
+    await storage.write(key: 'jwt_refresh', value: refresh);
   }
 
   static String? get accessToken => _accessToken;
@@ -60,5 +64,8 @@ class ApiClient {
     _accessToken = null;
     _refreshToken = null;
     _isRefreshing = false;
+    const storage = FlutterSecureStorage();
+    await storage.delete(key: 'jwt_access');
+    await storage.delete(key: 'jwt_refresh');
   }
 }

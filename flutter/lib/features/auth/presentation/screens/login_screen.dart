@@ -1,26 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aethel/core/constants/colors.dart';
+import 'package:aethel/features/auth/providers/auth_provider.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _pwCtrl = TextEditingController();
-  bool _obscure = true, _loading = false;
+  bool _obscure = true;
   String? _error;
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() { _loading = true; _error = null; });
-    // TODO: call AuthProvider.login(_emailCtrl.text, _pwCtrl.text)
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed('/dashboard');
+    setState(() { _error = null; });
+    await ref.read(authStateProvider.notifier).login(
+      _emailCtrl.text.trim(),
+      _pwCtrl.text,
+    );
+    final state = ref.read(authStateProvider);
+    if (state.isAuthenticated && mounted) {
+      Navigator.of(context).pushReplacementNamed('/dashboard');
+    } else if (mounted) {
+      setState(() => _error = state.error ?? 'Login failed');
+    }
   }
 
   @override
@@ -29,6 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final loading = ref.watch(authStateProvider).isLoading;
     return Scaffold(
       backgroundColor: isDark ? AppColors.bgPrimaryDark : AppColors.bgPrimaryLight,
       appBar: AppBar(title: const Text('Log in'), backgroundColor: Colors.transparent, elevation: 0),
@@ -69,8 +78,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13), textAlign: TextAlign.center),
               ],
               const Spacer(),
-              ElevatedButton(onPressed: _loading ? null : _submit,
-                  child: _loading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Log in')),
+              ElevatedButton(
+                onPressed: loading ? null : _submit,
+                child: loading
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('Log in'),
+              ),
               const SizedBox(height: 12),
               TextButton(onPressed: () => Navigator.of(context).pushReplacementNamed('/onboarding'),
                   child: const Text('No account? Sign up')),

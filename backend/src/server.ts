@@ -8,7 +8,7 @@ import schedulesRoutes from './modules/schedules/schedules.routes.js';
 import notificationsRoutes from './modules/notifications/notifications.routes.js';
 import { errorHandler } from './middleware/errorHandler.middleware.js';
 import { DueDateCheckJob } from './jobs/dueDateCheck.job.js';
-import { SyncGateway } from './websocket/syncGateway.js';
+import { initSyncGateway, syncGateway as gatewayInstance } from './websocket/syncGateway.js';
 
 const app = express();
 
@@ -26,7 +26,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().
 app.use(errorHandler);
 
 DueDateCheckJob.start();
-const syncGateway = new SyncGateway(env.WS_PORT);
+initSyncGateway(env.WS_PORT);
 
 const server = app.listen(env.PORT, () => {
   console.log(`[Server] Running on http://localhost:${env.PORT}`);
@@ -35,6 +35,6 @@ const server = app.listen(env.PORT, () => {
 
 process.on('SIGTERM', () => {
   console.log('[Server] Shutting down...');
-  syncGateway.close();
+  gatewayInstance.close();
   server.close(() => process.exit(0));
 });

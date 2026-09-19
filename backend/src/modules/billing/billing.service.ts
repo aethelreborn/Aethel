@@ -1,4 +1,5 @@
 import { prisma } from '../../config/db.js';
+import { syncGateway } from '../../websocket/syncGateway.js';
 
 export class BillingService {
   async findByUser(userId: string) {
@@ -6,7 +7,7 @@ export class BillingService {
   }
 
   async create(userId: string, data: any) {
-    return prisma.billingItem.create({
+    const item = await prisma.billingItem.create({
       data: {
         userId,
         itemType: data.item_type || 'BILL',
@@ -16,6 +17,8 @@ export class BillingService {
         nextDueDate: data.next_due_date ? new Date(data.next_due_date) : null,
       },
     });
+    syncGateway.broadcast(userId, 'billing.created', item);
+    return item;
   }
 
   async markPaid(userId: string, id: string) {
@@ -26,10 +29,13 @@ export class BillingService {
     const days = cycleDays[item.billingCycle || 'MONTHLY'] || 30;
     const nextDate = item.nextDueDate ? new Date(item.nextDueDate.getTime() + days * 24 * 60 * 60 * 1000) : null;
 
-    return prisma.billingItem.update({ where: { id, userId }, data: { lastNotifiedAt: new Date(), nextDueDate: nextDate } });
+    const updated = await prisma.billingItem.update({ where: { id, userId }, data: { lastNotifiedAt: new Date(), nextDueDate: nextDate } });
+    syncGateway.broadcast(userId, 'billing.marked_paid', updated);
+    return updated;
   }
 
   async delete(userId: string, id: string) {
     await prisma.billingItem.deleteMany({ where: { id, userId } });
+    syncGateway.broadcast(userId, 'billing.deleted', { id });
   }
 }

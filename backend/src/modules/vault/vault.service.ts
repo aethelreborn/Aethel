@@ -1,4 +1,5 @@
 import { prisma } from '../../config/db.js';
+import { syncGateway } from '../../websocket/syncGateway.js';
 
 export class VaultService {
   async findByUser(userId: string) {
@@ -10,7 +11,7 @@ export class VaultService {
   }
 
   async create(userId: string, data: any) {
-    return prisma.vaultItem.create({
+    const item = await prisma.vaultItem.create({
       data: {
         userId,
         itemType: data.item_type || 'PASSWORD',
@@ -19,13 +20,18 @@ export class VaultService {
         iv: data.iv,
       },
     });
+    syncGateway.broadcast(userId, 'vault.created', item);
+    return item;
   }
 
   async update(userId: string, id: string, data: any) {
-    return prisma.vaultItem.update({ where: { id, userId }, data });
+    const item = await prisma.vaultItem.update({ where: { id, userId }, data });
+    syncGateway.broadcast(userId, 'vault.updated', item);
+    return item;
   }
 
   async delete(userId: string, id: string) {
     await prisma.vaultItem.deleteMany({ where: { id, userId } });
+    syncGateway.broadcast(userId, 'vault.deleted', { id });
   }
 }

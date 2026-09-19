@@ -1,0 +1,35 @@
+# Environment secrets (never commit real .env)
+.env
+.env.local
+.env.*.local
+backend/.env
+
+# Backend build artifacts
+backend/node_modules/
+backend/dist/
+backend/.nyc_output/
+
+# Flutter build artifacts
+flutter/.dart_tool/
+flutter/.build/
+flutter/pubspec.lock
+flutter/*.iml
+
+# IDE & editor files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Figma exports (if added later)
+figma-assets/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+graft/.cache/
+graft/.graph/

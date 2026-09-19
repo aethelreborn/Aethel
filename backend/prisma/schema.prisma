@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ItemType {
+  PASSWORD
+  NOTE
+  CARDS
+  IDENTITY
+  SECURE_NOTE
+}
+
+enum BillingType {
+  BILL
+  SUBSCRIPTION
+}
+
+enum BillingCycle {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+model User {
+  id            String              @id @default(uuid())
+  email         String              @unique
+  passwordHash  String
+  createdAt     DateTime            @default(now()) @map("created_at")
+
+  vaultItems       VaultItem[]
+  billingItems     BillingItem[]
+  studySchedules   StudySchedule[]
+  devices          Device[]
+  notificationLogs NotificationLog[]
+
+  @@map("users")
+}
+
+model VaultItem {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  itemType         ItemType @map("item_type")
+  title            String
+  encryptedPayload String   @map("encrypted_payload")
+  iv               String
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "vault_items_userId_idx")
+  @@map("vault_items")
+}
+
+model BillingItem {
+  id             String        @id @default(uuid())
+  userId         String        @map("user_id")
+  itemType       BillingType   @map("item_type")
+  title          String
+  amountDue      Decimal       @map("amount_due")
+  nextDueDate    DateTime?     @map("next_due_date")
+  billingCycle   BillingCycle? @map("billing_cycle")
+  lastNotifiedAt DateTime?     @map("last_notified_at")
+  isActive       Boolean       @default(true)  @map("is_active")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "billing_items_userId_idx")
+  @@map("billing_items")
+}
+
+model StudySchedule {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  label        String
+  startTime    DateTime @map("start_time")
+  endTime      DateTime @map("end_time")
+  daysOfWeek   Int[]    @map("days_of_week") // 0=Sun .. 6=Sat
+  blockedApps  String[] @map("blocked_apps")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "study_schedules_userId_idx")
+  @@map("study_schedules")
+}
+
+model Device {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  pushToken  String   @map("push_token")
+  platform   String   // "android" | "ios"
+  createdAt  DateTime @default(now()) @map("created_at")
+  lastActive DateTime @default(now()) @map("last_active")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "devices_userId_idx")
+  @@map("devices")
+}
+
+model NotificationLog {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  channel    String   // "push_apns" | "push_fcm" | "in_app"
+  sentAt     DateTime @default(now()) @map("sent_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "notification_logs_userId_idx")
+  @@map("notification_logs")
+}

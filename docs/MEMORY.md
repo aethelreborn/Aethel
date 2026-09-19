@@ -102,6 +102,8 @@ Follow `TASKS.md` Phase 0 order: **TASK-001 → TASK-002 → TASK-003** (compile
 **Protocol:** append newest row at TOP. Columns: `Date | Who | Work done | Outcome | State left in`.
 
 | Date | Who | Work done | Outcome | State left in |
+| 2026-09-20 | claude | Production deploy config — Railway Dockerfile, GitHub Actions CI (flutter analyze + tsc), deploy.sh script, VERIFICATION.md checklist | 6 new files committed; app ready for zero-cost production deployment | Push to GitHub → Railway auto-deploys; set up UptimeRobot at https://your-app.railway.app/health |
+
 | 2026-09-20 | claude | Phase 1+2 completion: wired auth/vault/bills end-to-end, fixed L1 key bug, added Zod validation, killed mass-assignment, activated WS sync multi-device, fixed markPaid/cron dedup, made settings functional, added signup + JWT persistence | 14 tasks done; backend tsc green; flutter compile blockers resolved | Ready for docker + smoke test; TASK-007 (local DB) and TASK-012 (Argon2id) remain as debt |
 
 |---|---|---|---|---|

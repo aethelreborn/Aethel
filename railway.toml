@@ -1,0 +1,29 @@
+# Aethel — Railway deployment config
+# https://railway.app — free tier: $5 credit/month, auto-pauses when idle
+
+[build]
+builder = "DOCKERFILE"
+dockerfile = "backend/Dockerfile.production"
+watchPatterns = [
+  "backend/package.json",
+  "backend/package-lock.json",
+  "backend/tsconfig.json",
+  "backend/prisma/**/*",
+  "backend/src/**/*.ts",
+]
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 10
+restartPolicy = "on-failure"
+restartMaxRetries = 5
+
+[env]
+# Configure these in Railway dashboard → Variables (never commit secrets):
+#   NODE_ENV=production
+#   DATABASE_URL=postgresql://...       (Supabase or Neon connection string)
+#   JWT_SECRET=<64-char random hex>    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+#   JWT_REFRESH_SECRET=<same>
+#   FRONTEND_URL=https://your-app.vercel.app
+#   PORT=3000
+#   WS_PORT=3001

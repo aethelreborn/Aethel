@@ -1,0 +1,27 @@
+# ── Production Dockerfile for Railway / any container host ────────
+# Multi-stage: builder compiles TS, slim runner carries only what's needed.
+FROM node:20-slim AS builder
+
+WORKDIR /app
+COPY backend/package*.json ./
+RUN npm ci --only=production --ignore-scripts
+
+COPY backend/tsconfig.json backend/src ./src/
+COPY backend/prisma ./prisma/
+RUN npx prisma generate
+RUN npm run build
+
+# ── Runtime image ─────────────────────────────────────────────────
+FROM node:20-slim
+
+WORKDIR /app
+COPY --from=builder /app/dist     ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/prisma   ./prisma
+
+# Run Prisma migrations on every boot (safe no-op if already current)
+RUN npx prisma migrate deploy
+
+EXPOSE 3000 3001
+
+CMD ["node", "dist/server.js"]

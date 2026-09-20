@@ -18,10 +18,26 @@ import 'api_client.dart';
 /// below. Call [connect] once authentication succeeds; call [disconnect]
 /// (or [dispose]) when the user logs out.
 class WebSocketClient {
-  static const String kWsUrl = String.fromEnvironment(
+  // Compile-time override: --dart-define=AETHEL_WS_URL=wss://your-backend/ws
+  // Otherwise derives automatically from kApiBaseUrl (http→ws, https→wss).
+  static const String _overrideUrl = String.fromEnvironment(
     'AETHEL_WS_URL',
-    defaultValue: 'ws://localhost:3001',
+    defaultValue: '',
   );
+
+  /// Returns the WebSocket base URL, preferring an explicit compile-time
+  /// override, then deriving from [kApiBaseUrl], falling back to localhost.
+  static String get wsUrl {
+    if (_overrideUrl.isNotEmpty) return _overrideUrl;
+    final base = kApiBaseUrl;
+    if (base.startsWith('https://')) {
+      return 'wss://${base.substring('https://'.length)}/ws';
+    }
+    if (base.startsWith('http://')) {
+      return 'ws://${base.substring('http://'.length)}/ws';
+    }
+    return 'ws://localhost:3001';
+  }
 
   /// Single shared instance — intended to be used as a global singleton.
   static final WebSocketClient instance = WebSocketClient._internal();
@@ -63,7 +79,7 @@ class WebSocketClient {
     final token = ApiClient.accessToken;
     if (token == null) return;
 
-    final baseUrl = Uri.parse(kWsUrl);
+    final baseUrl = Uri.parse(wsUrl);
     final wsUri = Uri(
       scheme: baseUrl.scheme,
       host: baseUrl.host,

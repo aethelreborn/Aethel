@@ -1,8 +1,10 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:aethel/core/network/api_client.dart';
+import 'package:aethel/core/services/firebase_messaging_service.dart';
 import 'package:aethel/core/theme/app_theme.dart';
 import 'package:aethel/features/auth/presentation/screens/splash_screen.dart';
 import 'package:aethel/features/auth/presentation/screens/onboarding_screen.dart';
@@ -15,6 +17,10 @@ import 'package:aethel/features/dashboard/providers/sync_initializer_provider.da
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  
+  // Initialize Firebase and FCM
+  await FirebaseMessagingService.initialize();
+  
   ApiClient.init();
   // Restore persisted JWTs so the user stays logged in across restarts
   final storage = const FlutterSecureStorage();

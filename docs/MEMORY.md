@@ -29,9 +29,9 @@
 ## 3. Current build status (2026-09-20)
 
 - **Do NOT trust PLAN.md/README "Phase 1 complete / 0 issues" claims — stale.** Audit (2026-09-19/20) found the tree mid-refactor with compile errors.
-- Uncommitted, in-progress work on disk: `flutter/lib/core/crypto/secure_key_store.dart`, `flutter/lib/features/auth/presentation/screens/{login_screen,master_password_setup,splash_screen}.dart`, `flutter/lib/features/vault/presentation/{vault_detail_screen,vault_grid_screen}.dart`, `backend/src/websocket/syncGateway.ts`.
+- Uncommitted, in-progress work on disk: `aethel_app/lib/core/crypto/secure_key_store.dart`, `aethel_app/lib/features/auth/presentation/screens/{login_screen,master_password_setup,splash_screen}.dart`, `aethel_app/lib/features/vault/presentation/{vault_detail_screen,vault_grid_screen}.dart`, `backend/src/websocket/syncGateway.ts`.
 - **Files were actively changing during the audit** — re-read before editing.
-- `docs/analysis_options.yaml` holds the analyzer config; repo root no longer has one → `flutter analyze` from `flutter/` won't pick it up (TASK-016).
+- `docs/analysis_options.yaml` holds the analyzer config; repo root no longer has one → `flutter analyze` from `aethel_app/` won't pick it up (TASK-016).
 - Backend live entry = `backend/src/server.ts`. Root `backend/server.ts` + `backend/src/app.ts` are dead code.
 
 ---
@@ -40,10 +40,10 @@
 
 | # | Landmine | Location |
 |---|---|---|
-| L1 | `getDerivedKey()` derives from **empty password** → wrong key, GCM auth fails. Fix = biometric + `readKey()`. | `flutter/lib/core/crypto/secure_key_store.dart:55` |
+| L1 | `getDerivedKey()` derives from **empty password** → wrong key, GCM auth fails. Fix = biometric + `readKey()`. | `aethel_app/lib/core/crypto/secure_key_store.dart:55` |
 | L2 | Storage key names inconsistent: `aethel_aes_key`/`aethel_salt` vs `master_key` (vault_edit reads) vs deleted `vault_key`. | `secure_key_store.dart`, `vault_edit_screen.dart:114` |
-| L3 | `vault_edit_screen` uses base64 string bytes as AES key, sends `iv: ''`. Saved ciphertext is unreadable. | `flutter/lib/features/vault/presentation/vault_edit_screen.dart:118,135` |
-| L4 | `main.dart:19` `overrides: [syncInitializerProvider]` = type error; WS sync never activates. | `flutter/lib/main.dart` |
+| L3 | `vault_edit_screen` uses base64 string bytes as AES key, sends `iv: ''`. Saved ciphertext is unreadable. | `aethel_app/lib/features/vault/presentation/vault_edit_screen.dart:118,135` |
+| L4 | `main.dart:19` `overrides: [syncInitializerProvider]` = type error; WS sync never activates. | `aethel_app/lib/main.dart` |
 | L5 | `vault_detail_screen.dart` references `FlutterSecureStorage` without import (compile error); decrypt path + §8.4 biometric re-auth + clipboard clear not met. | `vault_detail_screen.dart:36` |
 | L6 | Backend: mass-assignment in `update` (raw `req.body` → Prisma) — ownership transfer possible. | `src/modules/vault/vault.service.ts:25`, `schedules.service.ts:22` |
 | L7 | `markPaid` writes `last_notified_at` → suppresses next cycle's push. | `src/modules/billing/billing.service.ts:29` |
@@ -72,7 +72,7 @@ Wire: Splash → Onboarding → MasterPasswordSetup · Login → Dashboard (5-ta
 ## 6. Commands cheatsheet
 
 ```bash
-# Flutter (from flutter/)
+# Flutter (from aethel_app/)
 flutter pub get
 flutter analyze          # NOTE: analyzer config location — TASK-016
 dart format lib

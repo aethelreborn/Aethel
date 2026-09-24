@@ -77,7 +77,7 @@
    - read MEMORY.md at session start, and
    - append to the Session Log + update Current Build Status at session end (even if incomplete).
 4. Keep ARCHITECTURE.md diagrams honest — mark new dead code with 💀 and existing gaps with their TASK ref.
-5. `analysis_options.yaml` lives in `docs/` (intentional) — note that `flutter analyze` config discovery from `flutter/` is currently broken (TASK-016).
+5. `analysis_options.yaml` lives in `docs/` (intentional) — note that `flutter analyze` config discovery from `aethel_app/` is currently broken (TASK-016).
 
 ---
 

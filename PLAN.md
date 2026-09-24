@@ -44,7 +44,7 @@ The server only ever sees ciphertext — your master password never leaves your 
 ### Phase 1 — Foundation ✅ COMPLETED
 
 #### 1.1 Project scaffolding ✅
-- [x] Flutter project initialized in `flutter/`
+- [x] Flutter project initialized in `aethel_app/`
 - [x] Node/TS backend initialized in `backend/`
 - [x] `docker-compose.yml` with PostgreSQL service
 - [x] Linters configured: `dart format`, `eslint`

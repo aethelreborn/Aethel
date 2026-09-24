@@ -42,7 +42,7 @@
 
 | ID | Pri | Status | Task | Target / AC |
 |---|---|---|---|---|
-| TASK-016 | P2 | todo | Analyzer config: `analysis_options.yaml` lives in `docs/` (intentional) but is not discovered from `flutter/`. Decide: restore a copy to repo root, or document `flutter analyze` working-directory requirement. | `flutter analyze` honors lints |
+| TASK-016 | P2 | todo | Analyzer config: `analysis_options.yaml` lives in `docs/` (intentional) but is not discovered from `aethel_app/`. Decide: restore a copy to repo root, or document `flutter analyze` working-directory requirement. | `flutter analyze` honors lints |
 | TASK-017 | P1 | todo | Focus panel: add ticking Timer/countdown, wire switches to a provider, route "Manage Schedules" → `ScheduleEditorScreen` (already built), add immediate-lock + `endSession`. | Countdown decrements; schedule editor opens |
 | TASK-018 | P1 | todo | Data auto-load: `vaultProvider`/`billingProvider`/`timelineProvider` must fetch on first build (not only pull-to-refresh); replace BillsScreen mock data with provider/DAO; FAB opens `BillEditScreen`. | First open shows real data; bills are server-backed |
 | TASK-021 | P1 | todo | Navigation & signup: add signup route/UI calling `authStateProvider.signup()` (currently dead); persist JWTs securely across restarts; per-platform base URL config for `api_client`. | New user completes onboarding → dashboard |

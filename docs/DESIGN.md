@@ -17,7 +17,7 @@
 
 ## 2. Color Tokens (§8.2)
 
-Token values: `flutter/lib/core/constants/colors.dart` (verify they match — audit found them aligned).
+Token values: `aethel_app/lib/core/constants/colors.dart` (verify they match — audit found them aligned).
 
 | Token | Light | Dark |
 |---|---|---|

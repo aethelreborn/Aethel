@@ -51,7 +51,7 @@ Aethel/
 │   ├── DESIGN.md            # design system + UX
 │   ├── TASKS.md             # work tracker
 │   └── MEMORY.md            # AI/agent persistent memory
-├── flutter/                 # Flutter frontend
+├── aethel_app/                 # Flutter frontend
 ├── backend/                 # Node.js + TypeScript backend
 ├── docker-compose.yml       # PostgreSQL 16 service
 ├── PLAN.md                  # legacy phase plan (superseded by docs/)
@@ -249,9 +249,9 @@ Schema ↔ migration.sql are in sync (all 6 tables + enums + FK CASCADE + indexe
 
 - `docker-compose.yml`: PostgreSQL 16, db `aethel`, postgres/postgres, port 5432.
 - Backend env (`backend/.env.example`): `DATABASE_URL`, `JWT_SECRET`/`JWT_REFRESH_SECRET` (≥32 chars), `NODE_ENV`, `PORT` (3000), `WS_PORT` (3001), `FRONTEND_URL`. **No `.env` present on disk** — `env.ts` throws without it.
-- Flutter run: `flutter run` from `flutter/` (needs platform scaffolding — none exists ❌ / assets/ absent ❌).
+- Flutter run: `flutter run` from `aethel_app/` (needs platform scaffolding — none exists ❌ / assets/ absent ❌).
 - **`express` missing from backend `dependencies`** (transitive peer only) — prod install risk (TASK-008).
-- `docs/analysis_options.yaml` holds the analyzer config; repo root no longer has one, so `flutter analyze` from `flutter/` won't discover it (TASK-016).
+- `docs/analysis_options.yaml` holds the analyzer config; repo root no longer has one, so `flutter analyze` from `aethel_app/` won't discover it (TASK-016).
 
 ---
 

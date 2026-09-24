@@ -8,12 +8,27 @@ backend/.env
 backend/node_modules/
 backend/dist/
 backend/.nyc_output/
+backend/android/
+backend/lib/
+backend/test/
+backend/.metadata
+backend/analysis_options.yaml
+backend/README.md
+backend/.gitignore
+backend/pubspec.yaml
+backend/pubspec.lock
 
 # Flutter build artifacts
 flutter/.dart_tool/
 flutter/.build/
 flutter/pubspec.lock
 flutter/*.iml
+aethel_app/.dart_tool/
+aethel_app/.build/
+aethel_app/graft/.cache/
+aethel_app/graft/.graph/
+aethel_app/android/local.properties
+aethel_app/**/local.properties
 
 # IDE & editor files
 .vscode/

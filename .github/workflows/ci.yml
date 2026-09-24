@@ -27,8 +27,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.x'
+          flutter-version: '3.47.5'
           channel: 'stable'
-      - run: cd flutter && flutter pub get
-      - run: cd flutter && flutter analyze --no-fatal-infos
-      - run: cd flutter && dart format lib --set-exit-if-changed --output=none
+      - run: cd aethel_app && flutter pub get
+      - run: cd aethel_app && flutter analyze
+      - run: cd aethel_app && dart format lib --set-exit-if-changed --output=none
+      - run: cd aethel_app && flutter test

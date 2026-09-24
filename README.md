@@ -24,7 +24,7 @@ A secure password vault, bill/subscription tracker, and focus blocker — built 
 
 ```
 Aether/
-├── flutter/                          # Flutter frontend (Dart)
+├── aethel_app/                          # Flutter frontend (Dart)
 │   ├── lib/
 │   │   ├── main.dart                 # Entry point
 │   │   ├── core/
@@ -165,7 +165,7 @@ npm run dev
 
 ### Flutter
 ```bash
-cd flutter
+cd aethel_app
 flutter pub get
 flutter run
 ```

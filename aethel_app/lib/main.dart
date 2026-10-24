@@ -1,4 +1,3 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,7 +11,6 @@ import 'package:aethel/features/auth/presentation/screens/login_screen.dart';
 import 'package:aethel/features/auth/presentation/screens/master_password_setup.dart';
 import 'package:aethel/features/auth/presentation/screens/signup_screen.dart';
 import 'package:aethel/features/dashboard/presentation/dashboard_screen.dart';
-import 'package:aethel/features/dashboard/providers/sync_initializer_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,15 +21,15 @@ void main() async {
   
   ApiClient.init();
   // Restore persisted JWTs so the user stays logged in across restarts
-  final storage = const FlutterSecureStorage();
+  const storage = FlutterSecureStorage();
   final savedAccess = await storage.read(key: 'jwt_access');
   final savedRefresh = await storage.read(key: 'jwt_refresh');
   if (savedAccess != null && savedRefresh != null) {
     await ApiClient.setTokens(savedAccess, savedRefresh);
   }
   runApp(
-    ProviderScope(
-      child: const AethelApp(),
+    const ProviderScope(
+      child: AethelApp(),
     ),
   );
 }

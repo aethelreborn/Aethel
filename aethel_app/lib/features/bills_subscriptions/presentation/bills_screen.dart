@@ -114,15 +114,14 @@ class _BillList extends StatelessWidget {
   }
 }
 
-class _BillTile extends StatelessWidget {
+class _BillTile extends ConsumerWidget {
   final BillingEntry item;
   final bool isDark;
 
   const _BillTile({required this.item, required this.isDark});
 
   @override
-  Widget build(BuildContext context) {
-    final isRef = ref.watch(billingProvider.notifier);
+  Widget build(BuildContext context, WidgetRef ref) {
     final color = _colorFor(item.urgency, isDark);
     return Dismissible(
       key: Key(item.id),
@@ -155,7 +154,7 @@ class _BillTile extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(item.title, style: const TextStyle(fontWeight: FontWeight.w600)),
-            Text(item.nextDueDate != null ? '${_fmtDate(item.nextDueDate!)}' : 'No due date', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+            Text(item.nextDueDate != null ? _fmtDate(item.nextDueDate!) : 'No due date', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
           ])),
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
             Text('\$${item.amountDue.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),

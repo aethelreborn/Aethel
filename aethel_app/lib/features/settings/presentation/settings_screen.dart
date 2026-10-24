@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aethel/core/constants/colors.dart';
@@ -26,13 +24,12 @@ class SettingsScreen extends ConsumerWidget {
           isDark: isDark,
           onTap: () async {
             final storage = ref.read(_storageProvider);
+            final navigator = ScaffoldMessenger.of(context);
             final enabled = (await storage.read(key: 'notifications_enabled')) != 'false';
             await storage.write(key: 'notifications_enabled', value: enabled ? 'false' : 'true');
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(enabled ? 'Notifications disabled' : 'Notifications enabled')),
-              );
-            }
+            navigator.showSnackBar(
+              SnackBar(content: Text(enabled ? 'Notifications disabled' : 'Notifications enabled')),
+            );
           },
         ),
         _SettingTile(
@@ -101,7 +98,7 @@ class SettingsScreen extends ConsumerWidget {
                         setDialogState(() => error = null);
                         try {
                           await SecureKeyStore(storage: const FlutterSecureStorage()).storeDerivedKey(newPwCtrl.text);
-                          if (mounted) Navigator.of(context).pop(true);
+                          if (context.mounted) Navigator.of(context).pop(true);
                         } catch (e) {
                           setDialogState(() => error = e.toString());
                         }
@@ -113,7 +110,8 @@ class SettingsScreen extends ConsumerWidget {
               ),
             );
 
-            if (result == true && mounted) {
+            if (result == true) {
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Master password updated')),
               );
@@ -157,14 +155,15 @@ class SettingsScreen extends ConsumerWidget {
                 ],
               ),
             );
-            if (confirmed != true || !mounted) return;
+            if (confirmed != true) return;
+            if (!context.mounted) return;
 
             try {
               await ApiClient.dio.delete('/auth/account');
             } catch (_) {}
 
             await ref.read(authStateProvider.notifier).logout();
-            if (mounted) {
+            if (context.mounted) {
               Navigator.of(context).pushReplacementNamed('/login');
             }
           },
@@ -175,7 +174,7 @@ class SettingsScreen extends ConsumerWidget {
           isDark: isDark,
           onTap: () async {
             await ref.read(authStateProvider.notifier).logout();
-            if (mounted) {
+            if (context.mounted) {
               Navigator.of(context).pushReplacementNamed('/login');
             }
           },

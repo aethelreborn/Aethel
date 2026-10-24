@@ -54,7 +54,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.accentDark,
                 shape: BoxShape.circle,
               ),

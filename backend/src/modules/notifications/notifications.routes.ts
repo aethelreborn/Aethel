@@ -40,7 +40,8 @@ router.get('/devices', authMiddleware, (req: Request, res: Response, next: NextF
 
 router.delete('/devices/:id', authMiddleware, (req: Request, res: Response, next: NextFunction) => {
   const userId = (req as any).userId;
-  unregisterDevice(userId, req.params.id, res, next);
+  const paramId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  unregisterDevice(userId, paramId, res, next);
 });
 
 export default router;

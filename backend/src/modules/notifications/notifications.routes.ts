@@ -1,6 +1,7 @@
 import { prisma } from '../../config/db.js';
 import { authMiddleware } from '../../middleware/auth.middleware.js';
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
+import { listDevices, registerDevice, unregisterDevice } from './notifications.service.js';
 
 const router = Router();
 
@@ -24,6 +25,22 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
   
   events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   res.json({ events: events.slice(0, 50) });
+});
+
+// Device routes
+router.post('/register', authMiddleware, (req: Request, res: Response, next: NextFunction) => {
+  const userId = (req as any).userId;
+  registerDevice(userId, req.body, res, next);
+});
+
+router.get('/devices', authMiddleware, (req: Request, res: Response, next: NextFunction) => {
+  const userId = (req as any).userId;
+  listDevices(userId, res, next);
+});
+
+router.delete('/devices/:id', authMiddleware, (req: Request, res: Response, next: NextFunction) => {
+  const userId = (req as any).userId;
+  unregisterDevice(userId, req.params.id, res, next);
 });
 
 export default router;

@@ -16,10 +16,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   
+  ApiClient.init();
   // Initialize Firebase and FCM
   await FirebaseMessagingService.initialize();
-  
-  ApiClient.init();
   // Restore persisted JWTs so the user stays logged in across restarts
   const storage = FlutterSecureStorage();
   final savedAccess = await storage.read(key: 'jwt_access');

@@ -28,6 +28,7 @@ app.use('/vault', vaultRoutes);
 app.use('/billing', billingRoutes);
 app.use('/schedules', schedulesRoutes);
 app.use('/timeline', notificationsRoutes);
+app.use('/devices', notificationsRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 

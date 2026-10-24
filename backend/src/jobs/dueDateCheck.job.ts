@@ -39,7 +39,7 @@ export class DueDateCheckJob {
 
         // Study schedules starting within 15 min that haven't been notified
         const upcomingSchedules = await prisma.studySchedule.findMany({
-          where: { startTime: { gte: now, lte: scheduleWindowEnd } },
+          where: { startTime: { gte: now, lte: scheduleWindowEnd }, lastNotifiedAt: null },
           select: { id: true, userId: true, label: true, startTime: true },
         });
 

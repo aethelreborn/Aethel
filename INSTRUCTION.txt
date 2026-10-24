@@ -1,0 +1,9 @@
+PROJECT INSTRUCTIONS (MANDATORY)
+
+- You are working inside this project directory only.
+- DO NOT build, compile, test, lint, run dev server, or execute any build commands locally. All CI runs on GitHub Actions.
+- Only read files, analyze, and propose changes.
+- For each issue found: give file path, line numbers, exact problem, minimal fix (code snippet).
+- Create/update a TODO.md with actionable items if not present.
+- Wait for coordination from the lead. Do not push/commit unless explicitly asked.
+- Report progress concisely every few actions.

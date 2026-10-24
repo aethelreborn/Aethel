@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:aethel/core/network/api_client.dart';
@@ -55,9 +57,10 @@ class FirebaseMessagingService {
 
   static Future<void> _sendTokenToBackend(String token) async {
     try {
+      final platform = Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'web');
       await ApiClient.dio.post('/devices/register', data: {
         'pushToken': token,
-        'platform': 'android',
+        'platform': platform,
       });
     } catch (e) {
       // Backend registration failed - token is cached and will be retried on refresh

@@ -9,12 +9,21 @@ export async function registerDevice(
   next: NextFunction
 ) {
   try {
-    const device = await prisma.device.upsert({
-      where: { id: body.id ?? undefined },
-      create: { id: body.id ?? undefined, userId, pushToken: body.pushToken || 'local-only', platform: body.platform || 'web' },
-      update: { pushToken: body.pushToken, platform: body.platform || 'web', lastActive: new Date() },
-      select: { id: true, pushToken: true, platform: true },
-    });
+    let device;
+    if (body.id) {
+      device = await prisma.device.upsert({
+        where: { id: body.id },
+        create: { id: body.id, userId, pushToken: body.pushToken || 'local-only', platform: body.platform || 'web' },
+        update: { pushToken: body.pushToken, platform: body.platform || 'web', lastActive: new Date() },
+        select: { id: true, pushToken: true, platform: true },
+      });
+    } else {
+      // No device id provided - create a new device record
+      device = await prisma.device.create({
+        data: { userId, pushToken: body.pushToken || 'local-only', platform: body.platform || 'web' },
+        select: { id: true, pushToken: true, platform: true },
+      });
+    }
     res.status(201).json(device);
   } catch (err) { next(err as Error); }
 }
@@ -47,10 +56,16 @@ export async function registerDeviceForPush(
   userId: string,
   body: { pushToken?: string; id?: string; platform?: string }
 ) {
-  return prisma.device.upsert({
-    where: { id: body.id ?? undefined },
-    create: { id: body.id ?? undefined, userId, pushToken: body.pushToken || 'local-only', platform: body.platform || 'web' },
-    update: { pushToken: body.pushToken, platform: body.platform || 'web', lastActive: new Date() },
+  if (body.id) {
+    return prisma.device.upsert({
+      where: { id: body.id },
+      create: { id: body.id, userId, pushToken: body.pushToken || 'local-only', platform: body.platform || 'web' },
+      update: { pushToken: body.pushToken, platform: body.platform || 'web', lastActive: new Date() },
+      select: { id: true, pushToken: true, platform: true },
+    });
+  }
+  return prisma.device.create({
+    data: { userId, pushToken: body.pushToken || 'local-only', platform: body.platform || 'web' },
     select: { id: true, pushToken: true, platform: true },
   });
 }

@@ -46,7 +46,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: AppColors.bgPrimaryDark,
       body: Center(
@@ -64,7 +63,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             const SizedBox(height: 24),
             const Text('Aethel', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.textPrimaryDark)),
             const SizedBox(height: 8),
-            Text('Your data. Your keys. Your privacy.', style: TextStyle(fontSize: 14, color: AppColors.textPrimaryDark.withValues(alpha: 0.7))),
+            const Text('Your data. Your keys. Your privacy.', style: TextStyle(fontSize: 14, color: AppColors.textPrimaryDark)),
           ],
         ),
       ),

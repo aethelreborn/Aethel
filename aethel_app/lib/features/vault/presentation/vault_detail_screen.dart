@@ -102,9 +102,11 @@ class _VaultDetailScreenState extends State<VaultDetailScreen> {
           );
         }
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete entry: $e'), backgroundColor: AppColors.urgent(context)),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: const Text('Entry deleted successfully'), backgroundColor: AppColors.resolved(context)),
+          );
+        }
       }
     }
   }

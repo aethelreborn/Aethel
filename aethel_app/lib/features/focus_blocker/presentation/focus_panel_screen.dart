@@ -72,7 +72,7 @@ class _FocusPanelScreenState extends State<FocusPanelScreen> {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(color: isDark ? AppColors.bgSurfaceDark : AppColors.bgSurfaceLight, borderRadius: BorderRadius.circular(10)),
-          child: Row(children: [Icon(Icons.block, color: AppColors.urgentLight), const SizedBox(width: 12), Text(app, style: const TextStyle(fontWeight: FontWeight.w500)), const Spacer(), Switch(value: true, onChanged: (_) {})]),
+          child: Row(children: [const Icon(Icons.block, color: AppColors.urgentLight), const SizedBox(width: 12), Text(app, style: const TextStyle(fontWeight: FontWeight.w500)), const Spacer(), Switch(value: true, onChanged: (_) {})]),
         )),
         const SizedBox(height: 24),
         ElevatedButton(

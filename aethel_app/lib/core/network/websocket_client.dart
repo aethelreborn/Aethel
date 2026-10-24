@@ -29,7 +29,7 @@ class WebSocketClient {
   /// override, then deriving from [kApiBaseUrl], falling back to localhost.
   static String get wsUrl {
     if (_overrideUrl.isNotEmpty) return _overrideUrl;
-    final base = kApiBaseUrl;
+    const base = kApiBaseUrl;
     if (base.startsWith('https://')) {
       return 'wss://${base.substring('https://'.length)}/ws';
     }

@@ -141,7 +141,7 @@ class DashboardHomeTab extends ConsumerWidget {
             // Timeline header
             Row(
               children: [
-                Text('Timeline', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text('Timeline', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const Spacer(),
                 TextButton(onPressed: () {}, child: const Text('View all', style: TextStyle(fontSize: 13))),
               ],

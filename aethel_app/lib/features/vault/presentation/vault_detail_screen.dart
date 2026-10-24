@@ -34,7 +34,8 @@ class _VaultDetailScreenState extends State<VaultDetailScreen> {
 
   /// Decrypts the entry payload after successful biometric auth.
   Future<void> _loadDecryptedValue() async {
-    final key = await SecureKeyStore(storage: const FlutterSecureStorage()).getDerivedKey();
+    final key = await SecureKeyStore(storage: const FlutterSecureStorage())
+        .getDerivedKey();
     if (key == null || !mounted) return;
     try {
       final plaintext = AesService.decrypt(key, widget.entry.encryptedPayload);
@@ -46,18 +47,23 @@ class _VaultDetailScreenState extends State<VaultDetailScreen> {
   }
 
   Future<void> _authenticate() async {
-    setState(() { _isLoadingAuth = true; _errorMessage = null; });
+    setState(() {
+      _isLoadingAuth = true;
+      _errorMessage = null;
+    });
     try {
       final authenticated = await _localAuth.authenticate(
         localizedReason: 'Authenticate to view your vault entry',
-        options: const AuthenticationOptions(stickyAuth: true, biometricOnly: false),
+        options:
+            const AuthenticationOptions(stickyAuth: true, biometricOnly: false),
       );
       if (authenticated && mounted) {
         setState(() => _isAuthenticated = true);
         // Decrypt once right after auth succeeds
         _loadDecryptedValue();
       } else if (mounted) {
-        setState(() => _errorMessage = 'Authentication failed. Please try again.');
+        setState(
+            () => _errorMessage = 'Authentication failed. Please try again.');
       }
     } catch (e) {
       if (mounted) setState(() => _errorMessage = 'Authentication error: $e');
@@ -68,10 +74,17 @@ class _VaultDetailScreenState extends State<VaultDetailScreen> {
 
   void _copyToClipboard(String value, String label) {
     Clipboard.setData(ClipboardData(text: value));
-    setState(() { _copied = true; _copyButtonText = 'Copied!'; });
+    setState(() {
+      _copied = true;
+      _copyButtonText = 'Copied!';
+    });
     _copyTimer?.cancel();
     _copyTimer = Timer(const Duration(seconds: 60), () {
-      if (mounted) setState(() { _copied = false; _copyButtonText = 'Copy'; });
+      if (mounted)
+        setState(() {
+          _copied = false;
+          _copyButtonText = 'Copy';
+        });
     });
   }
 
@@ -81,12 +94,16 @@ class _VaultDetailScreenState extends State<VaultDetailScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.bgSurface(context),
         title: const Text('Delete Entry'),
-        content: Text('Are you sure you want to delete "${widget.entry.title}"? This action cannot be undone.'),
+        content: Text(
+            'Are you sure you want to delete "${widget.entry.title}"? This action cannot be undone.'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel')),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.urgent(context)),
+            style: TextButton.styleFrom(
+                foregroundColor: AppColors.urgent(context)),
             child: const Text('Delete'),
           ),
         ],
@@ -98,13 +115,17 @@ class _VaultDetailScreenState extends State<VaultDetailScreen> {
         if (mounted) {
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: const Text('Entry deleted successfully'), backgroundColor: AppColors.resolved(context)),
+            SnackBar(
+                content: const Text('Entry deleted successfully'),
+                backgroundColor: AppColors.resolved(context)),
           );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: const Text('Entry deleted successfully'), backgroundColor: AppColors.resolved(context)),
+            SnackBar(
+                content: const Text('Entry deleted successfully'),
+                backgroundColor: AppColors.resolved(context)),
           );
         }
       }
@@ -112,11 +133,15 @@ class _VaultDetailScreenState extends State<VaultDetailScreen> {
   }
 
   void _navigateToEdit() {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => VaultEditScreen(entry: widget.entry)));
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => VaultEditScreen(entry: widget.entry)));
   }
 
   @override
-  void dispose() { _copyTimer?.cancel(); super.dispose(); }
+  void dispose() {
+    _copyTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -127,32 +152,49 @@ class _VaultDetailScreenState extends State<VaultDetailScreen> {
 
     IconData typeIcon;
     switch (widget.entry.type) {
-      case VaultItemType.password: typeIcon = Icons.lock_outline; break;
-      case VaultItemType.card: typeIcon = Icons.credit_card; break;
+      case VaultItemType.password:
+        typeIcon = Icons.lock_outline;
+        break;
+      case VaultItemType.card:
+        typeIcon = Icons.credit_card;
+        break;
       case VaultItemType.note:
-      case VaultItemType.secureNote: typeIcon = Icons.note; break;
-      case VaultItemType.identity: typeIcon = Icons.person_outline; break;
+      case VaultItemType.secureNote:
+        typeIcon = Icons.note;
+        break;
+      case VaultItemType.identity:
+        typeIcon = Icons.person_outline;
+        break;
     }
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.bgPrimaryDark : AppColors.bgPrimaryLight,
+      backgroundColor:
+          isDark ? AppColors.bgPrimaryDark : AppColors.bgPrimaryLight,
       appBar: AppBar(
         title: Text(widget.entry.title),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: textPrimary,
         actions: [
-          IconButton(icon: const Icon(Icons.edit), tooltip: 'Edit', onPressed: _navigateToEdit),
-          IconButton(icon: const Icon(Icons.delete), tooltip: 'Delete', onPressed: _deleteEntry),
+          IconButton(
+              icon: const Icon(Icons.edit),
+              tooltip: 'Edit',
+              onPressed: _navigateToEdit),
+          IconButton(
+              icon: const Icon(Icons.delete),
+              tooltip: 'Delete',
+              onPressed: _deleteEntry),
         ],
       ),
       body: _isAuthenticated
-          ? _buildContent(context, isDark, accentColor, textPrimary, bgSurface, typeIcon)
+          ? _buildContent(
+              context, isDark, accentColor, textPrimary, bgSurface, typeIcon)
           : _buildAuthGate(context, isDark, accentColor, textPrimary),
     );
   }
 
-  Widget _buildAuthGate(BuildContext context, bool isDark, Color accentColor, Color textPrimary) {
+  Widget _buildAuthGate(
+      BuildContext context, bool isDark, Color accentColor, Color textPrimary) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -160,16 +202,26 @@ class _VaultDetailScreenState extends State<VaultDetailScreen> {
           Icon(Icons.security, size: 72, color: accentColor),
           const SizedBox(height: 24),
           Text('Biometric Authentication Required',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textPrimary), textAlign: TextAlign.center),
+              style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary),
+              textAlign: TextAlign.center),
           const SizedBox(height: 12),
           Text('Authenticate to reveal your secure vault entry',
-              style: TextStyle(fontSize: 15, color: textPrimary.withValues(alpha: 0.7)), textAlign: TextAlign.center),
+              style: TextStyle(
+                  fontSize: 15, color: textPrimary.withValues(alpha: 0.7)),
+              textAlign: TextAlign.center),
           if (_errorMessage != null) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: AppColors.urgent(context).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-              child: Text(_errorMessage!, style: TextStyle(color: AppColors.urgent(context)), textAlign: TextAlign.center),
+              decoration: BoxDecoration(
+                  color: AppColors.urgent(context).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8)),
+              child: Text(_errorMessage!,
+                  style: TextStyle(color: AppColors.urgent(context)),
+                  textAlign: TextAlign.center),
             ),
           ],
           const SizedBox(height: 32),
@@ -178,10 +230,16 @@ class _VaultDetailScreenState extends State<VaultDetailScreen> {
             child: ElevatedButton.icon(
               onPressed: _isLoadingAuth ? null : _authenticate,
               icon: _isLoadingAuth
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.fingerprint),
-              label: Text(_isLoadingAuth ? 'Authenticating...' : 'Authenticate'),
-              style: ElevatedButton.styleFrom(backgroundColor: accentColor, padding: const EdgeInsets.symmetric(vertical: 16)),
+              label:
+                  Text(_isLoadingAuth ? 'Authenticating...' : 'Authenticate'),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: accentColor,
+                  padding: const EdgeInsets.symmetric(vertical: 16)),
             ),
           ),
         ]),
@@ -189,19 +247,34 @@ class _VaultDetailScreenState extends State<VaultDetailScreen> {
     );
   }
 
-  Widget _buildContent(BuildContext context, bool isDark, Color accentColor, Color textPrimary, Color bgSurface, IconData typeIcon) {
+  Widget _buildContent(BuildContext context, bool isDark, Color accentColor,
+      Color textPrimary, Color bgSurface, IconData typeIcon) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Card(color: bgSurface, child: Padding(padding: const EdgeInsets.all(20), child: Column(children: [
-          Icon(typeIcon, size: 48, color: accentColor),
-          const SizedBox(height: 12),
-          Text(widget.entry.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-          const SizedBox(height: 4),
-          Text(widget.entry.type.name.toUpperCase(), style: TextStyle(fontSize: 12, color: textPrimary.withValues(alpha: 0.5), letterSpacing: 1.2)),
-          const SizedBox(height: 4),
-          Text('Updated ${_formatDate(widget.entry.updatedAt)}', style: TextStyle(fontSize: 12, color: textPrimary.withValues(alpha: 0.5))),
-        ]))),
+        Card(
+            color: bgSurface,
+            child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(children: [
+                  Icon(typeIcon, size: 48, color: accentColor),
+                  const SizedBox(height: 12),
+                  Text(widget.entry.title,
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center),
+                  const SizedBox(height: 4),
+                  Text(widget.entry.type.name.toUpperCase(),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: textPrimary.withValues(alpha: 0.5),
+                          letterSpacing: 1.2)),
+                  const SizedBox(height: 4),
+                  Text('Updated ${_formatDate(widget.entry.updatedAt)}',
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: textPrimary.withValues(alpha: 0.5))),
+                ]))),
         const SizedBox(height: 16),
         _buildCredentialSection(textPrimary, accentColor, bgSurface),
         const SizedBox(height: 16),
@@ -210,19 +283,26 @@ class _VaultDetailScreenState extends State<VaultDetailScreen> {
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: () => setState(() => _revealSecret = !_revealSecret),
-                icon: Icon(_revealSecret ? Icons.visibility_off : Icons.visibility, size: 18),
+                icon: Icon(
+                    _revealSecret ? Icons.visibility_off : Icons.visibility,
+                    size: 18),
                 label: Text(_revealSecret ? 'Hide' : 'Reveal'),
-                style: OutlinedButton.styleFrom(foregroundColor: accentColor, padding: const EdgeInsets.symmetric(vertical: 14), side: BorderSide(color: accentColor)),
+                style: OutlinedButton.styleFrom(
+                    foregroundColor: accentColor,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: BorderSide(color: accentColor)),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: () => _copyToClipboard(_revealSecret ? _getSecretValue() : '', 'secret'),
+                onPressed: () => _copyToClipboard(
+                    _revealSecret ? _getSecretValue() : '', 'secret'),
                 icon: const Icon(Icons.copy, size: 18),
                 label: Text(_copyButtonText),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _copied ? AppColors.resolved(context) : accentColor,
+                  backgroundColor:
+                      _copied ? AppColors.resolved(context) : accentColor,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
@@ -233,13 +313,15 @@ class _VaultDetailScreenState extends State<VaultDetailScreen> {
     );
   }
 
-  Widget _buildCredentialSection(Color textPrimary, Color accentColor, Color bgSurface) {
+  Widget _buildCredentialSection(
+      Color textPrimary, Color accentColor, Color bgSurface) {
     return Card(
       color: bgSurface,
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Credential', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          const Text('Credential',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           _buildCredentialRow(textPrimary, accentColor),
         ]),
@@ -249,15 +331,22 @@ class _VaultDetailScreenState extends State<VaultDetailScreen> {
 
   Widget _buildCredentialRow(Color textPrimary, Color accentColor) {
     final isMasked = !_revealSecret;
-    final displayValue = isMasked ? _maskValue(_getSecretValue()) : _getSecretValue();
+    final displayValue =
+        isMasked ? _maskValue(_getSecretValue()) : _getSecretValue();
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: textPrimary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+          color: textPrimary.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(8)),
       child: Row(children: [
-        Expanded(child: Text(displayValue, style: const TextStyle(fontSize: 16, fontFamily: 'monospace'))),
+        Expanded(
+            child: Text(displayValue,
+                style: const TextStyle(fontSize: 16, fontFamily: 'monospace'))),
         const SizedBox(width: 8),
-        Icon(isMasked ? Icons.lock_outline : Icons.lock_open, size: 18, color: isMasked ? AppColors.urgent(context) : accentColor),
+        Icon(isMasked ? Icons.lock_outline : Icons.lock_open,
+            size: 18,
+            color: isMasked ? AppColors.urgent(context) : accentColor),
       ]),
     );
   }
@@ -266,11 +355,26 @@ class _VaultDetailScreenState extends State<VaultDetailScreen> {
 
   String _maskValue(String value) {
     if (value.isEmpty) return '••••••••';
-    return value.length > 4 ? '${'*' * (value.length - 4)}${value.substring(value.length - 4)}' : '••••••••';
+    return value.length > 4
+        ? '${'*' * (value.length - 4)}${value.substring(value.length - 4)}'
+        : '••••••••';
   }
 
   String _formatDate(DateTime date) {
-    final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 }

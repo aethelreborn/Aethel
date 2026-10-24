@@ -19,13 +19,18 @@ class AppTheme {
       scaffoldBackgroundColor: bg,
       fontFamily: 'Roboto',
       textTheme: TextTheme(
-        displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: txt),
-        displayMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: txt),
-        headlineMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: txt),
-        titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: txt),
+        displayLarge:
+            TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: txt),
+        displayMedium:
+            TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: txt),
+        headlineMedium:
+            TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: txt),
+        titleLarge:
+            TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: txt),
         bodyLarge: TextStyle(fontSize: 16, color: txt),
         bodyMedium: TextStyle(fontSize: 15, color: txt),
-        labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: txt),
+        labelLarge:
+            TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: txt),
       ),
       cardTheme: CardThemeData(
         color: surface,
@@ -53,7 +58,8 @@ class AppTheme {
           backgroundColor: AppColors.accentLight,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),

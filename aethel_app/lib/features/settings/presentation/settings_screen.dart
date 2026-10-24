@@ -15,7 +15,10 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings'), backgroundColor: Colors.transparent, elevation: 0),
+      appBar: AppBar(
+          title: const Text('Settings'),
+          backgroundColor: Colors.transparent,
+          elevation: 0),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         _SettingTile(
           icon: Icons.notifications,
@@ -25,10 +28,16 @@ class SettingsScreen extends ConsumerWidget {
           onTap: () async {
             final storage = ref.read(_storageProvider);
             final navigator = ScaffoldMessenger.of(context);
-            final enabled = (await storage.read(key: 'notifications_enabled')) != 'false';
-            await storage.write(key: 'notifications_enabled', value: enabled ? 'false' : 'true');
+            final enabled =
+                (await storage.read(key: 'notifications_enabled')) != 'false';
+            await storage.write(
+                key: 'notifications_enabled',
+                value: enabled ? 'false' : 'true');
             navigator.showSnackBar(
-              SnackBar(content: Text(enabled ? 'Notifications disabled' : 'Notifications enabled')),
+              SnackBar(
+                  content: Text(enabled
+                      ? 'Notifications disabled'
+                      : 'Notifications enabled')),
             );
           },
         ),
@@ -55,8 +64,10 @@ class SettingsScreen extends ConsumerWidget {
                       TextFormField(
                         controller: oldPwCtrl,
                         obscureText: true,
-                        decoration: const InputDecoration(labelText: 'Current Password'),
-                        validator: (v) => (v?.length ?? 0) < 1 ? 'Required' : null,
+                        decoration: const InputDecoration(
+                            labelText: 'Current Password'),
+                        validator: (v) =>
+                            (v?.length ?? 0) < 1 ? 'Required' : null,
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
@@ -65,11 +76,15 @@ class SettingsScreen extends ConsumerWidget {
                         decoration: InputDecoration(
                           labelText: 'New Password',
                           suffixIcon: IconButton(
-                            icon: Icon(obscureNew ? Icons.visibility_off : Icons.visibility),
-                            onPressed: () => setDialogState(() => obscureNew = !obscureNew),
+                            icon: Icon(obscureNew
+                                ? Icons.visibility_off
+                                : Icons.visibility),
+                            onPressed: () =>
+                                setDialogState(() => obscureNew = !obscureNew),
                           ),
                         ),
-                        validator: (v) => (v?.length ?? 0) < 8 ? 'Min 8 characters' : null,
+                        validator: (v) =>
+                            (v?.length ?? 0) < 8 ? 'Min 8 characters' : null,
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
@@ -78,26 +93,37 @@ class SettingsScreen extends ConsumerWidget {
                         decoration: InputDecoration(
                           labelText: 'Confirm New Password',
                           suffixIcon: IconButton(
-                            icon: Icon(obscureConfirm ? Icons.visibility_off : Icons.visibility),
-                            onPressed: () => setDialogState(() => obscureConfirm = !obscureConfirm),
+                            icon: Icon(obscureConfirm
+                                ? Icons.visibility_off
+                                : Icons.visibility),
+                            onPressed: () => setDialogState(
+                                () => obscureConfirm = !obscureConfirm),
                           ),
                         ),
-                        validator: (v) => v != newPwCtrl.text ? 'Passwords do not match' : null,
+                        validator: (v) => v != newPwCtrl.text
+                            ? 'Passwords do not match'
+                            : null,
                       ),
                       if (error != null) ...[
                         const SizedBox(height: 8),
-                        Text(error!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+                        Text(error!,
+                            style: const TextStyle(
+                                color: Colors.red, fontSize: 13)),
                       ],
                     ]),
                   ),
                   actions: [
-                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+                    TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        child: const Text('Cancel')),
                     ElevatedButton(
                       onPressed: () async {
                         if (!formKey.currentState!.validate()) return;
                         setDialogState(() => error = null);
                         try {
-                          await SecureKeyStore(storage: const FlutterSecureStorage()).storeDerivedKey(newPwCtrl.text);
+                          await SecureKeyStore(
+                                  storage: const FlutterSecureStorage())
+                              .storeDerivedKey(newPwCtrl.text);
                           if (context.mounted) Navigator.of(context).pop(true);
                         } catch (e) {
                           setDialogState(() => error = e.toString());
@@ -144,11 +170,15 @@ class SettingsScreen extends ConsumerWidget {
               context: context,
               builder: (ctx) => AlertDialog(
                 title: const Text('Delete Account'),
-                content: const Text('This will permanently delete your account and all associated data. This action cannot be undone.'),
+                content: const Text(
+                    'This will permanently delete your account and all associated data. This action cannot be undone.'),
                 actions: [
-                  TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+                  TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: const Text('Cancel')),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.urgentLight),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.urgentLight),
                     onPressed: () => Navigator.of(ctx).pop(true),
                     child: const Text('Delete'),
                   ),
@@ -213,10 +243,17 @@ class _SettingTile extends StatelessWidget {
         child: Row(children: [
           Icon(icon, color: accent ?? AppColors.accentLight),
           const SizedBox(width: 16),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-            if (subtitle.isNotEmpty) Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
-          ])),
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text(title,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                if (subtitle.isNotEmpty)
+                  Text(subtitle,
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+              ])),
           Icon(Icons.chevron_right, color: Colors.grey.shade400),
         ]),
       ),

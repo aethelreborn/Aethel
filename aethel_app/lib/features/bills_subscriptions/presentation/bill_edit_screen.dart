@@ -49,7 +49,6 @@ class _BillEditScreenState extends State<BillEditScreen> {
     BillingCycle.yearly: 'Yearly',
   };
 
-
   @override
   void initState() {
     super.initState();
@@ -135,7 +134,9 @@ class _BillEditScreenState extends State<BillEditScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                widget.entry == null ? 'Bill added successfully' : 'Bill updated successfully',
+                widget.entry == null
+                    ? 'Bill added successfully'
+                    : 'Bill updated successfully',
               ),
               backgroundColor: AppColors.resolved(context),
             ),
@@ -160,7 +161,8 @@ class _BillEditScreenState extends State<BillEditScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final resp = await ApiClient.dio.post('/billing/${widget.entry!.id}/paid');
+      final resp =
+          await ApiClient.dio.post('/billing/${widget.entry!.id}/paid');
       if (resp.statusCode == 200 && mounted) {
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -249,7 +251,8 @@ class _BillEditScreenState extends State<BillEditScreen> {
     final accentColor = AppColors.accent(context);
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.bgPrimaryDark : AppColors.bgPrimaryLight,
+      backgroundColor:
+          isDark ? AppColors.bgPrimaryDark : AppColors.bgPrimaryLight,
       appBar: AppBar(
         title: Text(widget.entry == null ? 'Add Bill' : 'Edit Bill'),
         backgroundColor: Colors.transparent,
@@ -304,7 +307,8 @@ class _BillEditScreenState extends State<BillEditScreen> {
                 prefixIcon: Icon(Icons.attach_money),
                 suffixIcon: Icon(Icons.monetization_on),
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               validator: (v) {
                 if (v == null || v.trim().isEmpty) return 'Amount is required';
                 if (double.tryParse(v.trim()) == null) return 'Invalid amount';
@@ -324,7 +328,8 @@ class _BillEditScreenState extends State<BillEditScreen> {
               readOnly: true,
               onTap: _selectDueDate,
               validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Due date is required';
+                if (v == null || v.trim().isEmpty)
+                  return 'Due date is required';
                 return null;
               },
             ),
@@ -423,7 +428,8 @@ class _BillEditScreenState extends State<BillEditScreen> {
           child: _TypeChip(
             label: 'Subscription',
             selected: _selectedType == BillingType.subscription,
-            onTap: () => setState(() => _selectedType = BillingType.subscription),
+            onTap: () =>
+                setState(() => _selectedType = BillingType.subscription),
             accentColor: accentColor,
           ),
         ),

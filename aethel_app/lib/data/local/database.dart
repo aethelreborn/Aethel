@@ -15,7 +15,8 @@ class AethelDatabase {
 
   /// Returns the singleton database instance. Must be initialized first via [init].
   static Database get database {
-    if (_db == null) throw StateError('Database not initialized — call init() first');
+    if (_db == null)
+      throw StateError('Database not initialized — call init() first');
     return _db!;
   }
 
@@ -79,11 +80,14 @@ class AethelDatabase {
       )
     ''');
 
-    await db.execute('CREATE INDEX idx_vault_updated ON vault_items(updated_at DESC)');
-    await db.execute('CREATE INDEX idx_billing_active ON billing_items(is_active, next_due_date)');
+    await db.execute(
+        'CREATE INDEX idx_vault_updated ON vault_items(updated_at DESC)');
+    await db.execute(
+        'CREATE INDEX idx_billing_active ON billing_items(is_active, next_due_date)');
   }
 
-  static Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+  static Future<void> _onUpgrade(
+      Database db, int oldVersion, int newVersion) async {
     // Version 1 — no migrations yet.
   }
 }

@@ -144,7 +144,8 @@ class BillingEntry extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, title, amountDue, type, isActive, createdAt, updatedAt];
+  List<Object?> get props =>
+      [id, title, amountDue, type, isActive, createdAt, updatedAt];
 }
 
 class TimelineEvent extends Equatable {
@@ -167,7 +168,8 @@ class TimelineEvent extends Equatable {
   factory TimelineEvent.fromBilling(BillingEntry entry) => TimelineEvent(
         id: entry.id,
         title: entry.title,
-        subtitle: '\$${entry.amountDue.toStringAsFixed(2)} — ${entry.cycle?.name ?? 'one-time'}',
+        subtitle:
+            '\$${entry.amountDue.toStringAsFixed(2)} — ${entry.cycle?.name ?? 'one-time'}',
         urgency: entry.urgency,
         timestamp: entry.nextDueDate ?? entry.createdAt,
         module: 'billing',

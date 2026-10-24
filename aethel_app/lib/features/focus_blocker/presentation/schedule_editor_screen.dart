@@ -127,9 +127,8 @@ class _ScheduleEditorScreenState extends State<ScheduleEditorScreen> {
     _selectedDays = widget.entry != null
         ? Set<int>.from(widget.entry!.daysOfWeek)
         : {1, 2, 3, 4, 5}; // Default Mon-Fri
-    _blockedApps = widget.entry != null
-        ? Set<String>.from(widget.entry!.blockedApps)
-        : {};
+    _blockedApps =
+        widget.entry != null ? Set<String>.from(widget.entry!.blockedApps) : {};
     _customAppController = TextEditingController();
 
     if (widget.entry != null) {
@@ -284,7 +283,8 @@ class _ScheduleEditorScreenState extends State<ScheduleEditorScreen> {
     final bgSurface = AppColors.bgSurface(context);
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.bgPrimaryDark : AppColors.bgPrimaryLight,
+      backgroundColor:
+          isDark ? AppColors.bgPrimaryDark : AppColors.bgPrimaryLight,
       appBar: AppBar(
         title: Text(widget.entry == null ? 'Add Schedule' : 'Edit Schedule'),
         backgroundColor: Colors.transparent,
@@ -407,13 +407,41 @@ class _ScheduleEditorScreenState extends State<ScheduleEditorScreen> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _DayChip(label: 'Sun', index: 0, selected: _selectedDays, onTap: _toggleDay),
-                _DayChip(label: 'Mon', index: 1, selected: _selectedDays, onTap: _toggleDay),
-                _DayChip(label: 'Tue', index: 2, selected: _selectedDays, onTap: _toggleDay),
-                _DayChip(label: 'Wed', index: 3, selected: _selectedDays, onTap: _toggleDay),
-                _DayChip(label: 'Thu', index: 4, selected: _selectedDays, onTap: _toggleDay),
-                _DayChip(label: 'Fri', index: 5, selected: _selectedDays, onTap: _toggleDay),
-                _DayChip(label: 'Sat', index: 6, selected: _selectedDays, onTap: _toggleDay),
+                _DayChip(
+                    label: 'Sun',
+                    index: 0,
+                    selected: _selectedDays,
+                    onTap: _toggleDay),
+                _DayChip(
+                    label: 'Mon',
+                    index: 1,
+                    selected: _selectedDays,
+                    onTap: _toggleDay),
+                _DayChip(
+                    label: 'Tue',
+                    index: 2,
+                    selected: _selectedDays,
+                    onTap: _toggleDay),
+                _DayChip(
+                    label: 'Wed',
+                    index: 3,
+                    selected: _selectedDays,
+                    onTap: _toggleDay),
+                _DayChip(
+                    label: 'Thu',
+                    index: 4,
+                    selected: _selectedDays,
+                    onTap: _toggleDay),
+                _DayChip(
+                    label: 'Fri',
+                    index: 5,
+                    selected: _selectedDays,
+                    onTap: _toggleDay),
+                _DayChip(
+                    label: 'Sat',
+                    index: 6,
+                    selected: _selectedDays,
+                    onTap: _toggleDay),
               ],
             ),
             const SizedBox(height: 20),
@@ -438,7 +466,8 @@ class _ScheduleEditorScreenState extends State<ScheduleEditorScreen> {
                 firstDay: DateTime.utc(2020, 1, 1),
                 lastDay: DateTime.utc(2030, 12, 31),
                 focusedDay: _focusedDay,
-                selectedDayPredicate: (day) => isSameDay(_selectedDay, day) || _isDaySelected(day),
+                selectedDayPredicate: (day) =>
+                    isSameDay(_selectedDay, day) || _isDaySelected(day),
                 onDaySelected: (selectedDay, focusedDay) {
                   setState(() {
                     _selectedDay = selectedDay;
@@ -508,7 +537,9 @@ class _ScheduleEditorScreenState extends State<ScheduleEditorScreen> {
                       decoration: InputDecoration(
                         hintText: 'e.g. Netflix, Spotify',
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF2A2D32) : const Color(0xFFF5F5F5),
+                        fillColor: isDark
+                            ? const Color(0xFF2A2D32)
+                            : const Color(0xFFF5F5F5),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide.none,
@@ -532,19 +563,19 @@ class _ScheduleEditorScreenState extends State<ScheduleEditorScreen> {
               const SizedBox(height: 8),
               // Show already-added custom apps as chips
               ..._blockedApps.where((a) => !_defaultApps.contains(a)).map(
-                (app) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: _CustomAppChip(
-                    label: app,
-                    onRemove: () => _toggleApp(app),
+                    (app) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: _CustomAppChip(
+                        label: app,
+                        onRemove: () => _toggleApp(app),
+                      ),
+                    ),
                   ),
-                ),
-              ),
             ],
             const SizedBox(height: 8),
             ..._blockedApps.where((a) => !_defaultApps.contains(a)).map(
-              (app) => const SizedBox.shrink(),
-            ),
+                  (app) => const SizedBox.shrink(),
+                ),
             const SizedBox(height: 24),
 
             // Error message

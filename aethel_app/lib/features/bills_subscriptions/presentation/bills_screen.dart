@@ -11,7 +11,8 @@ class BillsScreen extends ConsumerStatefulWidget {
   ConsumerState<BillsScreen> createState() => _BillsScreenState();
 }
 
-class _BillsScreenState extends ConsumerState<BillsScreen> with SingleTickerProviderStateMixin {
+class _BillsScreenState extends ConsumerState<BillsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
 
   Future<void> _refresh() async {
@@ -28,16 +29,23 @@ class _BillsScreenState extends ConsumerState<BillsScreen> with SingleTickerProv
 
   String _filterTab(String filter) {
     switch (_tabCtrl.index) {
-      case 1: return 'upcoming';
-      case 2: return 'paid';
-      default: return 'all';
+      case 1:
+        return 'upcoming';
+      case 2:
+        return 'paid';
+      default:
+        return 'all';
     }
   }
 
   List<BillingEntry> _filterBills(List<BillingEntry> bills, String filter) {
     switch (filter) {
       case 'upcoming':
-        return bills.where((b) => b.urgency == UrgencyLevel.upcoming || b.urgency == UrgencyLevel.urgent).toList();
+        return bills
+            .where((b) =>
+                b.urgency == UrgencyLevel.upcoming ||
+                b.urgency == UrgencyLevel.urgent)
+            .toList();
       case 'paid':
         return bills.where((b) => !b.isActive).toList();
       default:
@@ -46,9 +54,16 @@ class _BillsScreenState extends ConsumerState<BillsScreen> with SingleTickerProv
   }
 
   @override
-  void initState() { super.initState(); _tabCtrl = TabController(length: 3, vsync: this); }
+  void initState() {
+    super.initState();
+    _tabCtrl = TabController(length: 3, vsync: this);
+  }
+
   @override
-  void dispose() { _tabCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _tabCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +75,11 @@ class _BillsScreenState extends ConsumerState<BillsScreen> with SingleTickerProv
         title: const Text('Bills & Subscriptions'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        bottom: TabBar(controller: _tabCtrl, tabs: const [Tab(text: 'All'), Tab(text: 'Upcoming'), Tab(text: 'Paid')]),
+        bottom: TabBar(controller: _tabCtrl, tabs: const [
+          Tab(text: 'All'),
+          Tab(text: 'Upcoming'),
+          Tab(text: 'Paid')
+        ]),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _refresh),
         ],
@@ -69,22 +88,34 @@ class _BillsScreenState extends ConsumerState<BillsScreen> with SingleTickerProv
         data: (bills) {
           final filtered = _filterBills(bills, _filterTab(''));
           if (filtered.isEmpty && _tabCtrl.index == 0) {
-            return const Center(child: Text('No bills yet. Add your first one!', style: TextStyle(color: Colors.grey)));
+            return const Center(
+                child: Text('No bills yet. Add your first one!',
+                    style: TextStyle(color: Colors.grey)));
           }
           if (filtered.isEmpty) {
-            return const Center(child: Text('None in this category.', style: TextStyle(color: Colors.grey)));
+            return const Center(
+                child: Text('None in this category.',
+                    style: TextStyle(color: Colors.grey)));
           }
           return TabBarView(
             controller: _tabCtrl,
             children: [
               _BillList(bills: bills, isDark: isDark, onRefresh: _refresh),
-              _BillList(bills: _filterBills(bills, 'upcoming'), isDark: isDark, onRefresh: _refresh),
-              _BillList(bills: _filterBills(bills, 'paid'), isDark: isDark, onRefresh: _refresh),
+              _BillList(
+                  bills: _filterBills(bills, 'upcoming'),
+                  isDark: isDark,
+                  onRefresh: _refresh),
+              _BillList(
+                  bills: _filterBills(bills, 'paid'),
+                  isDark: isDark,
+                  onRefresh: _refresh),
             ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => Center(child: Text('Failed to load bills', style: TextStyle(color: Colors.grey.shade500))),
+        error: (_, __) => Center(
+            child: Text('Failed to load bills',
+                style: TextStyle(color: Colors.grey.shade500))),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addBill,
@@ -100,11 +131,15 @@ class _BillList extends StatelessWidget {
   final bool isDark;
   final VoidCallback onRefresh;
 
-  const _BillList({required this.bills, required this.isDark, required this.onRefresh});
+  const _BillList(
+      {required this.bills, required this.isDark, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
-    if (bills.isEmpty) return const Center(child: Text('No bills here yet.', style: TextStyle(color: Colors.grey)));
+    if (bills.isEmpty)
+      return const Center(
+          child:
+              Text('No bills here yet.', style: TextStyle(color: Colors.grey)));
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: bills.length,
@@ -126,8 +161,11 @@ class _BillTile extends ConsumerWidget {
     return Dismissible(
       key: Key(item.id),
       direction: DismissDirection.endToStart,
-      background: Container(color: AppColors.urgent(context), alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 16),
-        child: const Icon(Icons.delete, color: Colors.white)),
+      background: Container(
+          color: AppColors.urgent(context),
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 16),
+          child: const Icon(Icons.delete, color: Colors.white)),
       confirmDismiss: (direction) async {
         final confirmed = await showDialog<bool>(
           context: context,
@@ -135,8 +173,13 @@ class _BillTile extends ConsumerWidget {
             title: const Text('Delete Bill'),
             content: Text('Delete "${item.title}"?'),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-              TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Cancel')),
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Delete',
+                      style: TextStyle(color: Colors.red))),
             ],
           ),
         );
@@ -148,27 +191,51 @@ class _BillTile extends ConsumerWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: isDark ? AppColors.bgSurfaceDark : AppColors.bgSurfaceLight, borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(
+            color: isDark ? AppColors.bgSurfaceDark : AppColors.bgSurfaceLight,
+            borderRadius: BorderRadius.circular(12)),
         child: Row(children: [
-          CircleAvatar(radius: 20, backgroundColor: color.withValues(alpha: 0.15), child: Icon(Icons.receipt, color: color)),
+          CircleAvatar(
+              radius: 20,
+              backgroundColor: color.withValues(alpha: 0.15),
+              child: Icon(Icons.receipt, color: color)),
           const SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(item.title, style: const TextStyle(fontWeight: FontWeight.w600)),
-            Text(item.nextDueDate != null ? _fmtDate(item.nextDueDate!) : 'No due date', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
-          ])),
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text(item.title,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                    item.nextDueDate != null
+                        ? _fmtDate(item.nextDueDate!)
+                        : 'No due date',
+                    style:
+                        TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+              ])),
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text('\$${item.amountDue.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('\$${item.amountDue.toStringAsFixed(2)}',
+                style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             if (!item.isActive)
-              Container(margin: const EdgeInsets.only(top: 4), padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
-                child: Text('PAID', style: TextStyle(fontSize: 10, color: color))),
+              Container(
+                  margin: const EdgeInsets.only(top: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8)),
+                  child: Text('PAID',
+                      style: TextStyle(fontSize: 10, color: color))),
             if (item.isActive)
               ElevatedButton(
                 onPressed: () async {
                   await ref.read(billingProvider.notifier).markPaid(item.id);
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.resolved(context), padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.resolved(context),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
                 child: const Text('Paid', style: TextStyle(fontSize: 10)),
               ),
           ]),
@@ -179,10 +246,14 @@ class _BillTile extends ConsumerWidget {
 
   Color _colorFor(UrgencyLevel urgency, bool isDark) {
     switch (urgency) {
-      case UrgencyLevel.urgent: return AppColors.urgentLight;
-      case UrgencyLevel.upcoming: return AppColors.upcomingLight;
-      case UrgencyLevel.scheduled: return AppColors.informationalLight;
-      case UrgencyLevel.resolved: return AppColors.resolvedLight;
+      case UrgencyLevel.urgent:
+        return AppColors.urgentLight;
+      case UrgencyLevel.upcoming:
+        return AppColors.upcomingLight;
+      case UrgencyLevel.scheduled:
+        return AppColors.informationalLight;
+      case UrgencyLevel.resolved:
+        return AppColors.resolvedLight;
     }
   }
 

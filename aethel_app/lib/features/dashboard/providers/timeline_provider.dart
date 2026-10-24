@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aethel/domain/models/models.dart';
 import 'package:aethel/core/network/api_client.dart';
 
-final timelineProvider = StateNotifierProvider<TimelineNotifier, AsyncValue<List<TimelineEvent>>>(
+final timelineProvider =
+    StateNotifierProvider<TimelineNotifier, AsyncValue<List<TimelineEvent>>>(
   (ref) => TimelineNotifier(),
 );
 
@@ -36,7 +37,8 @@ class TimelineNotifier extends StateNotifier<AsyncValue<List<TimelineEvent>>> {
   }
 }
 
-final vaultProvider = StateNotifierProvider<VaultNotifier, AsyncValue<List<VaultEntry>>>(
+final vaultProvider =
+    StateNotifierProvider<VaultNotifier, AsyncValue<List<VaultEntry>>>(
   (ref) => VaultNotifier(),
 );
 
@@ -50,7 +52,9 @@ class VaultNotifier extends StateNotifier<AsyncValue<List<VaultEntry>>> {
     try {
       final resp = await ApiClient.dio.get('/vault');
       final List<dynamic> items = resp.data['items'] as List<dynamic>? ?? [];
-      final entries = items.map((e) => VaultEntry.fromJson(e as Map<String, dynamic>)).toList();
+      final entries = items
+          .map((e) => VaultEntry.fromJson(e as Map<String, dynamic>))
+          .toList();
       state = AsyncValue.data(entries);
     } catch (e, st) {
       state = AsyncValue.error(e.toString(), st);
@@ -68,7 +72,8 @@ class VaultNotifier extends StateNotifier<AsyncValue<List<VaultEntry>>> {
   }
 }
 
-final billingProvider = StateNotifierProvider<BillingNotifier, AsyncValue<List<BillingEntry>>>(
+final billingProvider =
+    StateNotifierProvider<BillingNotifier, AsyncValue<List<BillingEntry>>>(
   (ref) => BillingNotifier(),
 );
 
@@ -82,7 +87,9 @@ class BillingNotifier extends StateNotifier<AsyncValue<List<BillingEntry>>> {
     try {
       final resp = await ApiClient.dio.get('/billing');
       final List<dynamic> items = resp.data['items'] as List<dynamic>? ?? [];
-      final entries = items.map((e) => BillingEntry.fromJson(e as Map<String, dynamic>)).toList();
+      final entries = items
+          .map((e) => BillingEntry.fromJson(e as Map<String, dynamic>))
+          .toList();
       state = AsyncValue.data(entries);
     } catch (e, st) {
       state = AsyncValue.error(e.toString(), st);

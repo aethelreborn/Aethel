@@ -15,7 +15,7 @@ import 'package:aethel/features/dashboard/presentation/dashboard_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  
+
   ApiClient.init();
   // Initialize Firebase and FCM
   await FirebaseMessagingService.initialize();

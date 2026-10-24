@@ -30,14 +30,19 @@ class ApiClient {
         return handler.next(options);
       },
       onError: (DioException err, handler) async {
-        if (err.response?.statusCode == 401 && _refreshToken != null && !_isRefreshing) {
+        if (err.response?.statusCode == 401 &&
+            _refreshToken != null &&
+            !_isRefreshing) {
           _isRefreshing = true;
           try {
-            final resp = await _dio.post('/auth/refresh', data: {'refresh_token': _refreshToken});
+            final resp = await _dio
+                .post('/auth/refresh', data: {'refresh_token': _refreshToken});
             if (resp.statusCode == 200 && resp.data is Map) {
               _accessToken = resp.data['access_token'] as String;
-              _refreshToken = resp.data['refresh_token'] as String? ?? _refreshToken!;
-              err.requestOptions.headers['Authorization'] = 'Bearer $_accessToken';
+              _refreshToken =
+                  resp.data['refresh_token'] as String? ?? _refreshToken!;
+              err.requestOptions.headers['Authorization'] =
+                  'Bearer $_accessToken';
               final newResp = await _dio.fetch(err.requestOptions);
               return handler.resolve(newResp);
             }

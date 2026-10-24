@@ -54,11 +54,13 @@ class _VaultGridScreenState extends ConsumerState<VaultGridScreen> {
           padding: const EdgeInsets.all(16),
           child: Wrap(
             spacing: 8,
-            children: _filters.map((f) => ChoiceChip(
-              label: Text(f),
-              selected: _filter == f,
-              onSelected: (_) => setState(() => _filter = f),
-            )).toList(),
+            children: _filters
+                .map((f) => ChoiceChip(
+                      label: Text(f),
+                      selected: _filter == f,
+                      onSelected: (_) => setState(() => _filter = f),
+                    ))
+                .toList(),
           ),
         ),
         Expanded(
@@ -71,22 +73,30 @@ class _VaultGridScreenState extends ConsumerState<VaultGridScreen> {
                       return type == _filter.toLowerCase();
                     }).toList();
               if (filtered.isEmpty) {
-                return const Center(child: Text('No vault entries yet.', style: TextStyle(color: Colors.grey)));
+                return const Center(
+                    child: Text('No vault entries yet.',
+                        style: TextStyle(color: Colors.grey)));
               }
               return GridView.builder(
                 padding: const EdgeInsets.all(16),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.1,
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.1,
                 ),
                 itemCount: filtered.length,
                 itemBuilder: (_, i) => _VaultCard(
-                  entry: filtered[i], isDark: isDark,
+                  entry: filtered[i],
+                  isDark: isDark,
                   onTap: () => _navigateToDetail(filtered[i]),
                 ),
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, __) => Center(child: Text('Failed to load vault', style: TextStyle(color: Colors.grey.shade500))),
+            error: (_, __) => Center(
+                child: Text('Failed to load vault',
+                    style: TextStyle(color: Colors.grey.shade500))),
           ),
         ),
       ]),
@@ -104,7 +114,8 @@ class _VaultCard extends StatelessWidget {
   final bool isDark;
   final VoidCallback onTap;
 
-  const _VaultCard({required this.entry, required this.isDark, required this.onTap});
+  const _VaultCard(
+      {required this.entry, required this.isDark, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -119,8 +130,13 @@ class _VaultCard extends StatelessWidget {
             children: [
               Icon(_iconFor(entry.type), size: 32, color: color),
               const SizedBox(height: 12),
-              Text(entry.title, style: const TextStyle(fontWeight: FontWeight.w600), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
-              Text(entry.type.name.toUpperCase(), style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+              Text(entry.title,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis),
+              Text(entry.type.name.toUpperCase(),
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
             ],
           ),
         ),
@@ -130,21 +146,31 @@ class _VaultCard extends StatelessWidget {
 
   Color _colorFor(VaultItemType type, bool isDark) {
     switch (type) {
-      case VaultItemType.password: return isDark ? AppColors.accentDark : AppColors.accentLight;
-      case VaultItemType.card: return isDark ? AppColors.upcomingDark : AppColors.upcomingLight;
+      case VaultItemType.password:
+        return isDark ? AppColors.accentDark : AppColors.accentLight;
+      case VaultItemType.card:
+        return isDark ? AppColors.upcomingDark : AppColors.upcomingLight;
       case VaultItemType.note:
-      case VaultItemType.secureNote: return isDark ? AppColors.informationalDark : AppColors.informationalLight;
-      case VaultItemType.identity: return isDark ? AppColors.resolvedDark : AppColors.resolvedLight;
+      case VaultItemType.secureNote:
+        return isDark
+            ? AppColors.informationalDark
+            : AppColors.informationalLight;
+      case VaultItemType.identity:
+        return isDark ? AppColors.resolvedDark : AppColors.resolvedLight;
     }
   }
 
   IconData _iconFor(VaultItemType type) {
     switch (type) {
-      case VaultItemType.password: return Icons.lock_outline;
-      case VaultItemType.card: return Icons.credit_card;
+      case VaultItemType.password:
+        return Icons.lock_outline;
+      case VaultItemType.card:
+        return Icons.credit_card;
       case VaultItemType.note:
-      case VaultItemType.secureNote: return Icons.note;
-      case VaultItemType.identity: return Icons.person_outline;
+      case VaultItemType.secureNote:
+        return Icons.note;
+      case VaultItemType.identity:
+        return Icons.person_outline;
     }
   }
 }

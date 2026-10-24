@@ -5,7 +5,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:aethel/core/network/api_client.dart';
 
 class FirebaseMessagingService {
-  static final FirebaseMessagingService _instance = FirebaseMessagingService._internal();
+  static final FirebaseMessagingService _instance =
+      FirebaseMessagingService._internal();
   factory FirebaseMessagingService() => _instance;
   FirebaseMessagingService._internal();
 
@@ -57,7 +58,8 @@ class FirebaseMessagingService {
 
   static Future<void> _sendTokenToBackend(String token) async {
     try {
-      final platform = Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'web');
+      final platform =
+          Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'web');
       await ApiClient.dio.post('/devices/register', data: {
         'pushToken': token,
         'platform': platform,

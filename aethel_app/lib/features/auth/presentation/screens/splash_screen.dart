@@ -58,12 +58,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 color: AppColors.accentDark,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.lock_outline, size: 48, color: Colors.white),
+              child:
+                  const Icon(Icons.lock_outline, size: 48, color: Colors.white),
             ),
             const SizedBox(height: 24),
-            const Text('Aethel', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.textPrimaryDark)),
+            const Text('Aethel',
+                style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimaryDark)),
             const SizedBox(height: 8),
-            const Text('Your data. Your keys. Your privacy.', style: TextStyle(fontSize: 14, color: AppColors.textPrimaryDark)),
+            const Text('Your data. Your keys. Your privacy.',
+                style:
+                    TextStyle(fontSize: 14, color: AppColors.textPrimaryDark)),
           ],
         ),
       ),

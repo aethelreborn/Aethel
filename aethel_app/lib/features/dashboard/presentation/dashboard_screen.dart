@@ -49,11 +49,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             : AppColors.bgSurfaceLight,
         indicatorColor: AppColors.accentLight.withValues(alpha: 0.15),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.lock_outline), selectedIcon: Icon(Icons.lock), label: 'Vault'),
-          NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long), label: 'Bills'),
-          NavigationDestination(icon: Icon(Icons.do_not_disturb_on_outlined), selectedIcon: Icon(Icons.do_not_disturb_on), label: 'Focus'),
-          NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'Settings'),
+          NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home),
+              label: 'Home'),
+          NavigationDestination(
+              icon: Icon(Icons.lock_outline),
+              selectedIcon: Icon(Icons.lock),
+              label: 'Vault'),
+          NavigationDestination(
+              icon: Icon(Icons.receipt_long_outlined),
+              selectedIcon: Icon(Icons.receipt_long),
+              label: 'Bills'),
+          NavigationDestination(
+              icon: Icon(Icons.do_not_disturb_on_outlined),
+              selectedIcon: Icon(Icons.do_not_disturb_on),
+              label: 'Focus'),
+          NavigationDestination(
+              icon: Icon(Icons.settings_outlined),
+              selectedIcon: Icon(Icons.settings),
+              label: 'Settings'),
         ],
       ),
     );
@@ -85,13 +100,15 @@ class DashboardHomeTab extends ConsumerWidget {
     });
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.bgPrimaryDark : AppColors.bgPrimaryLight,
+      backgroundColor:
+          isDark ? AppColors.bgPrimaryDark : AppColors.bgPrimaryLight,
       appBar: AppBar(
         title: const Text('Aethel'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          IconButton(icon: const Icon(Icons.notifications_outlined), onPressed: () {}),
+          IconButton(
+              icon: const Icon(Icons.notifications_outlined), onPressed: () {}),
         ],
       ),
       body: RefreshIndicator(
@@ -108,7 +125,9 @@ class DashboardHomeTab extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                color: isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight,
               ),
             ),
             const SizedBox(height: 20),
@@ -141,9 +160,14 @@ class DashboardHomeTab extends ConsumerWidget {
             // Timeline header
             Row(
               children: [
-                const Text('Timeline', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text('Timeline',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const Spacer(),
-                TextButton(onPressed: () {}, child: const Text('View all', style: TextStyle(fontSize: 13))),
+                TextButton(
+                    onPressed: () {},
+                    child:
+                        const Text('View all', style: TextStyle(fontSize: 13))),
               ],
             ),
             const SizedBox(height: 12),
@@ -169,7 +193,8 @@ class DashboardHomeTab extends ConsumerWidget {
                     events.add(TimelineEvent(
                       id: b.id,
                       title: b.title,
-                      subtitle: '\$${b.amountDue.toStringAsFixed(2)} — ${_fmtDate(b.nextDueDate!)}',
+                      subtitle:
+                          '\$${b.amountDue.toStringAsFixed(2)} — ${_fmtDate(b.nextDueDate!)}',
                       urgency: b.urgency,
                       timestamp: b.nextDueDate!,
                       module: 'billing',
@@ -186,7 +211,12 @@ class DashboardHomeTab extends ConsumerWidget {
                       padding: const EdgeInsets.only(top: 40),
                       child: Column(
                         children: [
-                          Icon(Icons.timeline, size: 48, color: (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight).withValues(alpha: 0.3)),
+                          Icon(Icons.timeline,
+                              size: 48,
+                              color: (isDark
+                                      ? AppColors.textPrimaryDark
+                                      : AppColors.textPrimaryLight)
+                                  .withValues(alpha: 0.3)),
                           const SizedBox(height: 12),
                           Text('Nothing here yet — add your first item!',
                               style: TextStyle(color: Colors.grey.shade500)),
@@ -197,11 +227,15 @@ class DashboardHomeTab extends ConsumerWidget {
                 }
 
                 return Column(
-                  children: limited.map((e) => _TimelineTile(event: e, isDark: isDark)).toList(),
+                  children: limited
+                      .map((e) => _TimelineTile(event: e, isDark: isDark))
+                      .toList(),
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => Center(child: Text('Failed to load', style: TextStyle(color: Colors.grey.shade500))),
+              error: (_, __) => Center(
+                  child: Text('Failed to load',
+                      style: TextStyle(color: Colors.grey.shade500))),
             ),
           ],
         ),
@@ -233,7 +267,12 @@ class _MetricChip extends StatelessWidget {
   final String label, value;
   final bool isDark;
   final Color? accent;
-  const _MetricChip({required this.icon, required this.label, required this.value, required this.isDark, this.accent});
+  const _MetricChip(
+      {required this.icon,
+      required this.label,
+      required this.value,
+      required this.isDark,
+      this.accent});
 
   @override
   Widget build(BuildContext context) {
@@ -247,9 +286,14 @@ class _MetricChip extends StatelessWidget {
       child: Row(children: [
         Icon(icon, color: c, size: 24),
         const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+        Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(value,
+              style:
+                  const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(label,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
         ])),
       ]),
     );
@@ -277,30 +321,43 @@ class _TimelineTile extends StatelessWidget {
       child: Row(children: [
         Icon(_iconFor(event.module), size: 20, color: color),
         const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(event.title, style: const TextStyle(fontWeight: FontWeight.w600)),
-          Text(event.subtitle, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+        Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(event.title,
+              style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(event.subtitle,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
         ])),
-        Text(_timeAgo(event.timestamp), style: TextStyle(fontSize: 11, color: color)),
+        Text(_timeAgo(event.timestamp),
+            style: TextStyle(fontSize: 11, color: color)),
       ]),
     );
   }
 
   Color _colorFor(UrgencyLevel u) {
     switch (u) {
-      case UrgencyLevel.urgent: return AppColors.urgentLight;
-      case UrgencyLevel.upcoming: return AppColors.upcomingLight;
-      case UrgencyLevel.scheduled: return AppColors.informationalLight;
-      case UrgencyLevel.resolved: return AppColors.resolvedLight;
+      case UrgencyLevel.urgent:
+        return AppColors.urgentLight;
+      case UrgencyLevel.upcoming:
+        return AppColors.upcomingLight;
+      case UrgencyLevel.scheduled:
+        return AppColors.informationalLight;
+      case UrgencyLevel.resolved:
+        return AppColors.resolvedLight;
     }
   }
 
   IconData _iconFor(String module) {
     switch (module) {
-      case 'vault': return Icons.lock_outline;
-      case 'billing': return Icons.receipt_long;
-      case 'schedule': return Icons.schedule;
-      default: return Icons.circle;
+      case 'vault':
+        return Icons.lock_outline;
+      case 'billing':
+        return Icons.receipt_long;
+      case 'schedule':
+        return Icons.schedule;
+      default:
+        return Icons.circle;
     }
   }
 

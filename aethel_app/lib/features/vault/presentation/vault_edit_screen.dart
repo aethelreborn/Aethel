@@ -21,7 +21,8 @@ class VaultEditScreen extends StatefulWidget {
 
 class _VaultEditScreenState extends State<VaultEditScreen> {
   final _formKey = GlobalKey<FormState>();
-  final SecureKeyStore _keyStore = SecureKeyStore(storage: const FlutterSecureStorage());
+  final SecureKeyStore _keyStore =
+      SecureKeyStore(storage: const FlutterSecureStorage());
   final Uuid _uuid = const Uuid();
 
   late TextEditingController _titleController;
@@ -132,7 +133,10 @@ class _VaultEditScreenState extends State<VaultEditScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
-    setState(() { _isLoading = true; _errorMessage = null; });
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
     try {
       final key = await _keyStore.getDerivedKey();
@@ -141,14 +145,17 @@ class _VaultEditScreenState extends State<VaultEditScreen> {
       }
 
       final payloadMap = _buildPayloadMap();
-      final plaintext = payloadMap.entries.map((e) => '${e.key}=${e.value}').join('\n');
+      final plaintext =
+          payloadMap.entries.map((e) => '${e.key}=${e.value}').join('\n');
       final encryptedPayload = AesService.encrypt(key, plaintext);
 
-      final endpoint = widget.entry == null ? '/vault' : '/vault/${widget.entry!.id}';
+      final endpoint =
+          widget.entry == null ? '/vault' : '/vault/${widget.entry!.id}';
       final method = widget.entry == null ? 'POST' : 'PUT';
 
       // IV is appended to ciphertext by AesService.encrypt(); extract it for separate storage
-      final ivBytes = base64Decode(encryptedPayload).sublist(base64Decode(encryptedPayload).length - 12);
+      final ivBytes = base64Decode(encryptedPayload)
+          .sublist(base64Decode(encryptedPayload).length - 12);
       final iv = base64Encode(ivBytes);
 
       final response = await ApiClient.dio.request(
@@ -168,7 +175,9 @@ class _VaultEditScreenState extends State<VaultEditScreen> {
           Navigator.of(context).pop(true);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(widget.entry == null ? 'Entry created successfully' : 'Entry updated successfully'),
+              content: Text(widget.entry == null
+                  ? 'Entry created successfully'
+                  : 'Entry updated successfully'),
               backgroundColor: AppColors.resolved(context),
             ),
           );
@@ -218,19 +227,26 @@ class _VaultEditScreenState extends State<VaultEditScreen> {
     final accentColor = AppColors.accent(context);
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.bgPrimaryDark : AppColors.bgPrimaryLight,
+      backgroundColor:
+          isDark ? AppColors.bgPrimaryDark : AppColors.bgPrimaryLight,
       appBar: AppBar(
         title: Text(widget.entry == null ? 'Add Entry' : 'Edit Entry'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: textPrimary,
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).pop()),
+        leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.of(context).pop()),
         actions: [
           TextButton(
             onPressed: _isLoading ? null : _save,
             child: _isLoading
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Text('Save', style: TextStyle(fontWeight: FontWeight.w600)),
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const Text('Save',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -241,70 +257,121 @@ class _VaultEditScreenState extends State<VaultEditScreen> {
           children: [
             TextFormField(
               controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Title', prefixIcon: Icon(Icons.title)),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Title is required' : null,
+              decoration: const InputDecoration(
+                  labelText: 'Title', prefixIcon: Icon(Icons.title)),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Title is required' : null,
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<VaultItemType>(
               initialValue: _selectedType,
-              decoration: const InputDecoration(labelText: 'Type', prefixIcon: Icon(Icons.category)),
-              items: VaultItemType.values.map((type) => DropdownMenuItem(value: type, child: Text(type.name.capitalize()))).toList(),
-              onChanged: (value) { if (value != null) setState(() => _selectedType = value); },
+              decoration: const InputDecoration(
+                  labelText: 'Type', prefixIcon: Icon(Icons.category)),
+              items: VaultItemType.values
+                  .map((type) => DropdownMenuItem(
+                      value: type, child: Text(type.name.capitalize())))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) setState(() => _selectedType = value);
+              },
             ),
             const SizedBox(height: 24),
             if (_selectedType == VaultItemType.password) ...[
               _buildSectionHeader('Password Details', accentColor),
               const SizedBox(height: 8),
-              TextFormField(controller: _usernameController, decoration: const InputDecoration(labelText: 'Username', prefixIcon: Icon(Icons.person_outline))),
+              TextFormField(
+                  controller: _usernameController,
+                  decoration: const InputDecoration(
+                      labelText: 'Username',
+                      prefixIcon: Icon(Icons.person_outline))),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _passwordController,
-                decoration: InputDecoration(labelText: 'Password', prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(icon: Icon(_passwordVisible ? Icons.visibility : Icons.visibility_off),
-                    onPressed: () => setState(() => _passwordVisible = !_passwordVisible))),
+                decoration: InputDecoration(
+                    labelText: 'Password',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                        icon: Icon(_passwordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off),
+                        onPressed: () => setState(
+                            () => _passwordVisible = !_passwordVisible))),
                 obscureText: !_passwordVisible,
-                validator: (v) => (v == null || v.isEmpty) ? 'Password is required' : null,
+                validator: (v) =>
+                    (v == null || v.isEmpty) ? 'Password is required' : null,
               ),
               const SizedBox(height: 12),
-              TextFormField(controller: _urlController, decoration: const InputDecoration(labelText: 'URL', prefixIcon: Icon(Icons.link)), keyboardType: TextInputType.url),
+              TextFormField(
+                  controller: _urlController,
+                  decoration: const InputDecoration(
+                      labelText: 'URL', prefixIcon: Icon(Icons.link)),
+                  keyboardType: TextInputType.url),
               const SizedBox(height: 12),
-              TextFormField(controller: _notesController, decoration: const InputDecoration(labelText: 'Notes', prefixIcon: Icon(Icons.note_outlined)), maxLines: 3),
+              TextFormField(
+                  controller: _notesController,
+                  decoration: const InputDecoration(
+                      labelText: 'Notes',
+                      prefixIcon: Icon(Icons.note_outlined)),
+                  maxLines: 3),
             ] else if (_selectedType == VaultItemType.card) ...[
               _buildSectionHeader('Card Details', accentColor),
               const SizedBox(height: 8),
-              TextFormField(controller: _holderNameController, decoration: const InputDecoration(labelText: 'Holder Name', prefixIcon: Icon(Icons.badge))),
+              TextFormField(
+                  controller: _holderNameController,
+                  decoration: const InputDecoration(
+                      labelText: 'Holder Name', prefixIcon: Icon(Icons.badge))),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _cardNumberController,
-                decoration: const InputDecoration(labelText: 'Card Number', prefixIcon: Icon(Icons.credit_card)),
+                decoration: const InputDecoration(
+                    labelText: 'Card Number',
+                    prefixIcon: Icon(Icons.credit_card)),
                 keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly, _CardNumberFormatter()],
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  _CardNumberFormatter()
+                ],
                 validator: (v) {
                   if (v == null || v.isEmpty) return 'Card number is required';
-                  if (v.replaceAll(RegExp(r'\s'), '').length < 13) return 'Invalid card number';
+                  if (v.replaceAll(RegExp(r'\s'), '').length < 13)
+                    return 'Invalid card number';
                   return null;
                 },
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: TextFormField(
+                  Expanded(
+                      child: TextFormField(
                     controller: _expiryController,
-                    decoration: const InputDecoration(labelText: 'Expiry (MM/YY)', prefixIcon: Icon(Icons.calendar_today)),
+                    decoration: const InputDecoration(
+                        labelText: 'Expiry (MM/YY)',
+                        prefixIcon: Icon(Icons.calendar_today)),
                     keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly, _ExpiryFormatter()],
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      _ExpiryFormatter()
+                    ],
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Required';
-                      if (!RegExp(r'^\d{2}/\d{2}$').hasMatch(v)) return 'Use MM/YY';
+                      if (!RegExp(r'^\d{2}/\d{2}$').hasMatch(v))
+                        return 'Use MM/YY';
                       return null;
                     },
                   )),
                   const SizedBox(width: 12),
-                  Expanded(child: TextFormField(
+                  Expanded(
+                      child: TextFormField(
                     controller: _cvvController,
-                    decoration: InputDecoration(labelText: 'CVV', prefixIcon: const Icon(Icons.security),
-                      suffixIcon: IconButton(icon: Icon(_cvvVisible ? Icons.visibility : Icons.visibility_off),
-                        onPressed: () => setState(() => _cvvVisible = !_cvvVisible))),
+                    decoration: InputDecoration(
+                        labelText: 'CVV',
+                        prefixIcon: const Icon(Icons.security),
+                        suffixIcon: IconButton(
+                            icon: Icon(_cvvVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off),
+                            onPressed: () =>
+                                setState(() => _cvvVisible = !_cvvVisible))),
                     keyboardType: TextInputType.number,
                     obscureText: !_cvvVisible,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -316,25 +383,46 @@ class _VaultEditScreenState extends State<VaultEditScreen> {
                   )),
                 ],
               ),
-            ] else if (_selectedType == VaultItemType.note || _selectedType == VaultItemType.secureNote) ...[
+            ] else if (_selectedType == VaultItemType.note ||
+                _selectedType == VaultItemType.secureNote) ...[
               _buildSectionHeader('Note Details', accentColor),
               const SizedBox(height: 8),
-              TextFormField(controller: _noteTitleController, decoration: const InputDecoration(labelText: 'Note Title', prefixIcon: Icon(Icons.note))),
+              TextFormField(
+                  controller: _noteTitleController,
+                  decoration: const InputDecoration(
+                      labelText: 'Note Title', prefixIcon: Icon(Icons.note))),
               const SizedBox(height: 12),
-              TextFormField(controller: _noteContentController, decoration: const InputDecoration(labelText: 'Content', prefixIcon: Icon(Icons.article_outlined)), maxLines: 8),
+              TextFormField(
+                  controller: _noteContentController,
+                  decoration: const InputDecoration(
+                      labelText: 'Content',
+                      prefixIcon: Icon(Icons.article_outlined)),
+                  maxLines: 8),
             ] else if (_selectedType == VaultItemType.identity) ...[
               _buildSectionHeader('Identity Details', accentColor),
               const SizedBox(height: 8),
-              TextFormField(controller: _usernameController, decoration: const InputDecoration(labelText: 'ID Number / Username', prefixIcon: Icon(Icons.badge))),
+              TextFormField(
+                  controller: _usernameController,
+                  decoration: const InputDecoration(
+                      labelText: 'ID Number / Username',
+                      prefixIcon: Icon(Icons.badge))),
               const SizedBox(height: 12),
-              TextFormField(controller: _notesController, decoration: const InputDecoration(labelText: 'Additional Notes', prefixIcon: Icon(Icons.note_outlined)), maxLines: 3),
+              TextFormField(
+                  controller: _notesController,
+                  decoration: const InputDecoration(
+                      labelText: 'Additional Notes',
+                      prefixIcon: Icon(Icons.note_outlined)),
+                  maxLines: 3),
             ],
             if (_errorMessage != null) ...[
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppColors.urgent(context).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                child: Text(_errorMessage!, style: TextStyle(color: AppColors.urgent(context))),
+                decoration: BoxDecoration(
+                    color: AppColors.urgent(context).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8)),
+                child: Text(_errorMessage!,
+                    style: TextStyle(color: AppColors.urgent(context))),
               ),
             ],
             const SizedBox(height: 24),
@@ -347,7 +435,12 @@ class _VaultEditScreenState extends State<VaultEditScreen> {
   Widget _buildSectionHeader(String title, Color accentColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      child: Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: accentColor, letterSpacing: 0.8)),
+      child: Text(title,
+          style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: accentColor,
+              letterSpacing: 0.8)),
     );
   }
 }
@@ -356,7 +449,8 @@ class _VaultEditScreenState extends State<VaultEditScreen> {
 
 class _CardNumberFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
     final digits = newValue.text.replaceAll(RegExp(r'\s'), '');
     if (digits.isEmpty) return newValue.copyWith(text: '');
     final buffer = StringBuffer();
@@ -364,13 +458,16 @@ class _CardNumberFormatter extends TextInputFormatter {
       if (i > 0 && i % 4 == 0) buffer.write(' ');
       buffer.write(digits[i]);
     }
-    return TextEditingValue(text: buffer.toString(), selection: TextSelection.collapsed(offset: buffer.length));
+    return TextEditingValue(
+        text: buffer.toString(),
+        selection: TextSelection.collapsed(offset: buffer.length));
   }
 }
 
 class _ExpiryFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
     final digits = newValue.text.replaceAll(RegExp(r'[\/\s]'), '');
     if (digits.isEmpty) return newValue.copyWith(text: '');
     String formatted;
@@ -379,10 +476,13 @@ class _ExpiryFormatter extends TextInputFormatter {
     } else {
       formatted = '${digits.substring(0, 2)}/${digits.substring(1, 4)}';
     }
-    return TextEditingValue(text: formatted, selection: TextSelection.collapsed(offset: formatted.length));
+    return TextEditingValue(
+        text: formatted,
+        selection: TextSelection.collapsed(offset: formatted.length));
   }
 }
 
 extension on String {
-  String capitalize() => isEmpty ? this : '${this[0].toUpperCase()}${substring(1)}';
+  String capitalize() =>
+      isEmpty ? this : '${this[0].toUpperCase()}${substring(1)}';
 }

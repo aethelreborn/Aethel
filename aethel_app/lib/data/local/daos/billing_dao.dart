@@ -67,7 +67,8 @@ class BillingDao {
 
   Future<BillingEntry?> findById(String id) async {
     final db = AethelDatabase.database;
-    final rows = await db.query(_table, where: 'id = ?', whereArgs: [id], limit: 1);
+    final rows =
+        await db.query(_table, where: 'id = ?', whereArgs: [id], limit: 1);
     if (rows.isEmpty) return null;
     return _fromRow(rows.first);
   }
@@ -76,10 +77,12 @@ class BillingDao {
   Future<List<BillingEntry>> findUpcoming(int daysAhead) async {
     final db = AethelDatabase.database;
     final now = DateTime.now().toIso8601String();
-    final deadline = DateTime.now().add(Duration(days: daysAhead)).toIso8601String();
+    final deadline =
+        DateTime.now().add(Duration(days: daysAhead)).toIso8601String();
     final rows = await db.query(
       _table,
-      where: 'is_active = 1 AND next_due_date IS NOT NULL AND next_due_date >= ? AND next_due_date <= ?',
+      where:
+          'is_active = 1 AND next_due_date IS NOT NULL AND next_due_date >= ? AND next_due_date <= ?',
       whereArgs: [now, deadline],
       orderBy: 'next_due_date ASC',
     );

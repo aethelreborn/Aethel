@@ -11,7 +11,8 @@ class AesService {
   static String encrypt(Uint8List key, String plaintext) {
     final iv = _randomBytes(ivLength);
     final cipher = GCMBlockCipher(AESEngine());
-    cipher.init(true, AEADParameters(KeyParameter(key), tagBits, iv, Uint8List(0)));
+    cipher.init(
+        true, AEADParameters(KeyParameter(key), tagBits, iv, Uint8List(0)));
     final plainBytes = Uint8List.fromList(plaintext.codeUnits);
     final out = cipher.process(plainBytes);
     final combined = Uint8List(out.length + iv.length);
@@ -25,7 +26,8 @@ class AesService {
     final iv = data.sublist(data.length - ivLength);
     final ct = data.sublist(0, data.length - ivLength);
     final cipher = GCMBlockCipher(AESEngine());
-    cipher.init(false, AEADParameters(KeyParameter(key), tagBits, iv, Uint8List(0)));
+    cipher.init(
+        false, AEADParameters(KeyParameter(key), tagBits, iv, Uint8List(0)));
     return String.fromCharCodes(cipher.process(ct));
   }
 

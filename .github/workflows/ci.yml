@@ -3,6 +3,7 @@ name: Build and verify
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -211,3 +212,36 @@ jobs:
           name: aethel-windows-x64
           path: aethel-windows-x64.zip
           if-no-files-found: error
+
+  release:
+    name: Publish release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [backend, flutter, web, linux, android, ios, macos, windows]
+    permissions:
+      contents: write
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - name: Assemble release assets
+        run: |
+          mkdir -p release
+          (cd dist/aethel-web && zip -qr ../release/aethel-web.zip .)
+          cp dist/aethel-linux-x64/aethel-linux-x64.tar.gz release/
+          cp dist/aethel-ios-unsigned/aethel-ios-unsigned.zip release/
+          cp dist/aethel-macos/aethel-macos.zip release/
+          cp dist/aethel-windows-x64/aethel-windows-x64.zip release/
+          (cd dist/aethel-android && zip -qr ../release/aethel-android.zip .)
+          ls -la release
+      - name: Create or update GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" release/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" release/* --verify-tag --generate-notes --title "Aethel $GITHUB_REF_NAME"
+          fi

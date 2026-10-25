@@ -1,7 +1,7 @@
 # ── Production Dockerfile for Render / any container host ─────────
 # Multi-stage: builder installs ALL deps (typescript + prisma CLI are
 # needed to compile and generate the client), slim runtime carries only
-# what's needed. Migrations run at boot so schema stays current.
+# what's needed to run the API.
 FROM node:20-slim AS builder
 
 WORKDIR /app
@@ -25,5 +25,7 @@ COPY backend/package.json ./package.json
 
 EXPOSE 3000
 
-# Run Prisma migrations on every boot (safe no-op if already current)
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
+# Boot the API directly. Schema migrations are applied via
+# `npx prisma migrate deploy` (locally or in CI) — running them inside
+# the container is what crashed the first live deploy (nonZeroExit 1).
+CMD ["node", "dist/server.js"]

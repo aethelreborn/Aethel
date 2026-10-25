@@ -77,6 +77,25 @@ jobs:
           fi
           echo BOOT_OK
 
+  config:
+    name: Build config
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Shipped binaries bake this address in. Without it every install can
+      # only reach localhost and sign-in fails with "The vault server cannot
+      # be reached" — fail before building anything instead of publishing a
+      # broken release.
+      - name: Require AETHEL_API_URL
+        env:
+          AETHEL_API_URL: ${{ vars.AETHEL_API_URL }}
+        run: |
+          if [ -z "$AETHEL_API_URL" ]; then
+            echo "::error::Repository variable AETHEL_API_URL is not set; builds would only reach localhost. Set it with: gh variable set AETHEL_API_URL --body https://your-api.example.com"
+            exit 1
+          fi
+          echo "Vault server baked into builds: $AETHEL_API_URL"
+
   flutter:
     name: Flutter checks
     runs-on: ubuntu-latest
@@ -98,11 +117,14 @@ jobs:
 
   web:
     name: Web
+    needs: [config]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
       run:
         working-directory: aethel_app
+    env:
+      AETHEL_API_URL: ${{ vars.AETHEL_API_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -111,20 +133,27 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter build web --release --base-href /
+      - run: flutter build web --release --base-href / --dart-define=AETHEL_API_URL="$AETHEL_API_URL"
+      - name: Package static site
+        run: |
+          cd build/web
+          zip -qr ../../../aethel-web.zip .
       - uses: actions/upload-artifact@v4
         with:
           name: aethel-web
-          path: aethel_app/build/web
+          path: aethel-web.zip
           if-no-files-found: error
 
   linux:
     name: Linux
+    needs: [config]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:
       run:
         working-directory: aethel_app
+    env:
+      AETHEL_API_URL: ${{ vars.AETHEL_API_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -137,22 +166,60 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsecret-1-dev libstdc++-13-dev
       - run: flutter pub get
-      - run: flutter build linux --release
-      - name: Package bundle
-        run: tar -czf ../aethel-linux-x64.tar.gz -C build/linux/x64/release bundle
+      - run: flutter build linux --release --dart-define=AETHEL_API_URL="$AETHEL_API_URL"
+      # A single-file executable instead of an archive the user has to unpack
+      # and then hunt for the launcher inside.
+      - name: Package AppImage
+        run: |
+          set -euo pipefail
+          bundle="build/linux/x64/release/bundle"
+          appdir="build/appimage/Aethel.AppDir"
+
+          rm -rf "$appdir"
+          mkdir -p "$appdir/usr/bin"
+          cp -a "$bundle/." "$appdir/usr/bin/"
+
+          cat > "$appdir/AppRun" <<'APPRUN'
+          #!/bin/sh
+          HERE="$(dirname "$(readlink -f "$0")")"
+          exec "$HERE/usr/bin/aethel" "$@"
+          APPRUN
+          chmod +x "$appdir/AppRun"
+
+          cat > "$appdir/aethel.desktop" <<'DESKTOP'
+          [Desktop Entry]
+          Type=Application
+          Name=Aethel
+          Comment=Private vault, bill ledger and focus timer
+          Exec=aethel
+          Icon=aethel
+          Categories=Utility;Security;
+          Terminal=false
+          DESKTOP
+
+          cp web/icons/Icon-512.png "$appdir/aethel.png"
+
+          curl -fsSL -o /tmp/appimagetool \
+            https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x /tmp/appimagetool
+          ARCH=x86_64 /tmp/appimagetool --appimage-extract-and-run "$appdir" "$PWD/../aethel-linux-x64.AppImage"
+          test -x ../aethel-linux-x64.AppImage
       - uses: actions/upload-artifact@v4
         with:
           name: aethel-linux-x64
-          path: aethel-linux-x64.tar.gz
+          path: aethel-linux-x64.AppImage
           if-no-files-found: error
 
   android:
     name: Android
+    needs: [config]
     runs-on: ubuntu-latest
     timeout-minutes: 40
     defaults:
       run:
         working-directory: aethel_app
+    env:
+      AETHEL_API_URL: ${{ vars.AETHEL_API_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -165,23 +232,32 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter build apk --release
-      - run: flutter build appbundle --release
+      - run: flutter build apk --release --dart-define=AETHEL_API_URL="$AETHEL_API_URL"
+      - run: flutter build appbundle --release --dart-define=AETHEL_API_URL="$AETHEL_API_URL"
+      # Publish the APK itself, not a zip around it: an APK inside an archive
+      # cannot be installed without unpacking it first.
+      - name: Stage installables
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk ../aethel-android.apk
+          cp build/app/outputs/bundle/release/app-release.aab ../aethel-android.aab
       - uses: actions/upload-artifact@v4
         with:
           name: aethel-android
           path: |
-            aethel_app/build/app/outputs/flutter-apk/app-release.apk
-            aethel_app/build/app/outputs/bundle/release/app-release.aab
+            aethel-android.apk
+            aethel-android.aab
           if-no-files-found: error
 
   ios:
     name: iOS (unsigned)
+    needs: [config]
     runs-on: macos-14
     timeout-minutes: 40
     defaults:
       run:
         working-directory: aethel_app
+    env:
+      AETHEL_API_URL: ${{ vars.AETHEL_API_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -190,7 +266,7 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter build ios --release --no-codesign
+      - run: flutter build ios --release --no-codesign --dart-define=AETHEL_API_URL="$AETHEL_API_URL"
       - name: Package Runner.app
         run: ditto -c -k --sequesterRsrc --keepParent build/ios/iphoneos/Runner.app ../aethel-ios-unsigned.zip
       - uses: actions/upload-artifact@v4
@@ -201,11 +277,14 @@ jobs:
 
   macos:
     name: macOS
+    needs: [config]
     runs-on: macos-14
     timeout-minutes: 40
     defaults:
       run:
         working-directory: aethel_app
+    env:
+      AETHEL_API_URL: ${{ vars.AETHEL_API_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -214,25 +293,30 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter build macos --release
-      - name: Package Aethel.app
+      - run: flutter build macos --release --dart-define=AETHEL_API_URL="$AETHEL_API_URL"
+      - name: Package DMG
         run: |
           APP_PATH=$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)
           test -n "$APP_PATH"
-          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" ../aethel-macos.zip
+          rm -f ../aethel-macos.dmg
+          hdiutil create -volname "Aethel" -srcfolder "$APP_PATH" -ov -format UDZO ../aethel-macos.dmg
+          test -f ../aethel-macos.dmg
       - uses: actions/upload-artifact@v4
         with:
           name: aethel-macos
-          path: aethel-macos.zip
+          path: aethel-macos.dmg
           if-no-files-found: error
 
   windows:
     name: Windows
+    needs: [config]
     runs-on: windows-latest
     timeout-minutes: 40
     defaults:
       run:
         working-directory: aethel_app
+    env:
+      AETHEL_API_URL: ${{ vars.AETHEL_API_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -241,14 +325,32 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter build windows --release
-      - name: Package Windows bundle
+      - name: Build Windows app
+        shell: bash
+        run: flutter build windows --release --dart-define=AETHEL_API_URL="$AETHEL_API_URL"
+      # Flutter's output is a folder full of DLLs; an installer turns it into
+      # the single .exe download people expect.
+      - name: Build installer
         shell: pwsh
-        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath ../aethel-windows-x64.zip
+        run: |
+          choco install innosetup --no-progress -y
+          $pubspec = Get-Content pubspec.yaml -Raw
+          if ($pubspec -notmatch '(?m)^version:\s*([0-9]+\.[0-9]+\.[0-9]+)') {
+            throw "Could not read version from pubspec.yaml"
+          }
+          $version = $Matches[1]
+          $iscc = @(
+            "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+            "C:\Program Files\Inno Setup 6\ISCC.exe"
+          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $iscc) { throw "ISCC.exe not found after installing Inno Setup" }
+          & $iscc "/DAppVersion=$version" "installer\windows\aethel.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE" }
+          Copy-Item build\installer\aethel-windows-x64-setup.exe ..\aethel-windows-x64-setup.exe -Force
       - uses: actions/upload-artifact@v4
         with:
           name: aethel-windows-x64
-          path: aethel-windows-x64.zip
+          path: aethel-windows-x64-setup.exe
           if-no-files-found: error
 
   pages:
@@ -277,7 +379,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    needs: [flutter]
+    needs: [config, flutter]
     steps:
       - uses: actions/checkout@v4
       - name: Check deploy credentials
@@ -330,16 +432,31 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: dist
+          merge-multiple: true
+      # Every job already uploads a ready-to-install file, so the release is a
+      # flat set of binaries rather than zips wrapping zips.
       - name: Assemble release assets
         run: |
           mkdir -p release
-          (cd dist/aethel-web && zip -qr ../release/aethel-web.zip .)
-          (cd dist/aethel-linux-x64 && zip -qr ../release/aethel-linux-x64.zip .)
-          cp dist/aethel-ios-unsigned/aethel-ios-unsigned.zip release/
-          cp dist/aethel-macos/aethel-macos.zip release/
-          cp dist/aethel-windows-x64/aethel-windows-x64.zip release/
-          (cd dist/aethel-android && zip -qr ../release/aethel-android.zip .)
+          find dist -type f -exec cp {} release/ \;
+          missing=0
+          for asset in \
+            aethel-linux-x64.AppImage \
+            aethel-windows-x64-setup.exe \
+            aethel-macos.dmg \
+            aethel-android.apk \
+            aethel-android.aab \
+            aethel-ios-unsigned.zip \
+            aethel-web.zip; do
+            if [ ! -f "release/$asset" ]; then
+              echo "::error::Missing release asset: $asset"
+              missing=1
+            fi
+          done
           ls -la release
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
       - name: Create or update GitHub release
         env:
           GH_TOKEN: ${{ github.token }}

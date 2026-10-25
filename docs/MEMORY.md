@@ -26,8 +26,9 @@
 
 ---
 
-## 3. Current build status (2026-09-20)
+## 3. Current build status (2026-10-25)
 
+- **Release pipeline (2026-10-25):** every app build bakes `AETHEL_API_URL` — a new CI `config` job fails the run when the repository variable is unset — and releases publish installables (Linux AppImage, Windows `setup.exe`, macOS `dmg`, APK/AAB) instead of zips. Previously shipped binaries defaulted to `http://localhost:3000`, which is why installed copies failed login with "The vault server cannot be reached".
 - **Do NOT trust PLAN.md/README "Phase 1 complete / 0 issues" claims — stale.** Audit (2026-09-19/20) found the tree mid-refactor with compile errors.
 - Uncommitted, in-progress work on disk: `aethel_app/lib/core/crypto/secure_key_store.dart`, `aethel_app/lib/features/auth/presentation/screens/{login_screen,master_password_setup,splash_screen}.dart`, `aethel_app/lib/features/vault/presentation/{vault_detail_screen,vault_grid_screen}.dart`, `backend/src/websocket/syncGateway.ts`.
 - **Files were actively changing during the audit** — re-read before editing.
@@ -102,6 +103,7 @@ Follow `TASKS.md` Phase 0 order: **TASK-001 → TASK-002 → TASK-003** (compile
 **Protocol:** append newest row at TOP. Columns: `Date | Who | Work done | Outcome | State left in`.
 
 | Date | Who | Work done | Outcome | State left in |
+| 2026-10-25 | buffy | Fixed release packaging (zips → installables) and the installed-build login failure: CI now requires `AETHEL_API_URL` and passes it to every `flutter build`, and the release job publishes AppImage / setup.exe / dmg / apk / aab | CI + landing-page links updated; app reports a missing server address instead of a misleading network error | Not committed; next `v*` tag publishes the new assets |
 | 2026-09-20 | claude | Firebase FCM push notifications fully implemented — backend sends real pushes, Flutter registers devices, cron job triggers notifications | Backend tsc green; Flutter needs android/ platform files + google-services.json | Push to Railway → run flutter create . --platforms=android → add google-services.json → flutter build apk |
 
 | 2026-09-20 | claude | Production deploy config — Railway Dockerfile, GitHub Actions CI (flutter analyze + tsc), deploy.sh script, VERIFICATION.md checklist | 6 new files committed; app ready for zero-cost production deployment | Push to GitHub → Railway auto-deploys; set up UptimeRobot at https://your-app.railway.app/health |

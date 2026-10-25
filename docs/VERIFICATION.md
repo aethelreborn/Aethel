@@ -25,8 +25,10 @@
 - [ ] `https://your-app.onrender.com/health` → 200
 - [ ] UptimeRobot / Better Uptime pings every 5 min (see below)
 - [ ] Flutter app connects to public backend URL
+- [ ] Latest GitHub release ships installables (`.AppImage`, `-setup.exe`, `.dmg`, `.apk`), not zip wrappers
 
 ## Flutter app flow
+- [ ] Installed build signs in against `AETHEL_API_URL` (no "The vault server cannot be reached")
 - [ ] Splash → Onboarding → Sign up → Master password → Dashboard
 - [ ] Login → biometric unlock → Dashboard
 - [ ] Vault add/edit/delete works end-to-end

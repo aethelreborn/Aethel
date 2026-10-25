@@ -189,7 +189,14 @@ class ApiClient {
           message = 'The vault server took too long to answer.';
           break;
         case DioExceptionType.connectionError:
-          message = 'The vault server cannot be reached.';
+          // Distinguish a genuine network failure from a binary that was
+          // compiled without a vault server address (it can only reach
+          // localhost), which is otherwise indistinguishable to the user.
+          message = AppConfig.hasConfiguredServer
+              ? 'The vault server cannot be reached.'
+              : 'This copy of Aethel was built without a vault server address, '
+                  'so it cannot sign in. Install a current build, or rebuild '
+                  'with --dart-define=AETHEL_API_URL=https://your-server.';
           break;
         case DioExceptionType.badResponse:
           message = status == 401

@@ -8,18 +8,37 @@ class AppConfig {
   static const _apiBaseUrlOverride = String.fromEnvironment('AETHEL_API_URL');
   static const wsUrlOverride = String.fromEnvironment('AETHEL_WS_URL');
 
+  /// Whether this build was compiled with an explicit vault server address.
+  ///
+  /// A shipped binary without one can only ever talk to the machine it runs
+  /// on, so CI passes `--dart-define=AETHEL_API_URL=https://…` for every
+  /// release artifact.
+  static bool get hasConfiguredServer => _clean(_apiBaseUrlOverride).isNotEmpty;
+
   static String get apiBaseUrl {
-    if (_apiBaseUrlOverride.isNotEmpty) return _apiBaseUrlOverride;
+    final override = _clean(_apiBaseUrlOverride);
+    if (override.isNotEmpty) return override;
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       return 'http://10.0.2.2:3000';
     }
     return 'http://localhost:3000';
   }
 
+  /// Request paths already start with `/`, so a trailing slash in the
+  /// configured server would produce `//auth/login`.
+  static String _clean(String value) {
+    var url = value.trim();
+    while (url.endsWith('/')) {
+      url = url.substring(0, url.length - 1);
+    }
+    return url;
+  }
+
   /// WebSocket shares the HTTP server (path `/ws`) so one exposed port
   /// suffices on PaaS hosts; only an explicit override changes the target.
   static Uri get websocketUri {
-    if (wsUrlOverride.isNotEmpty) return Uri.parse(wsUrlOverride);
+    final override = _clean(wsUrlOverride);
+    if (override.isNotEmpty) return Uri.parse(override);
 
     final api = Uri.parse(apiBaseUrl);
     final secure = api.scheme == 'https';

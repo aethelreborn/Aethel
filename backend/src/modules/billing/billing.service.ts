@@ -18,6 +18,7 @@ export class BillingService {
         billingCycle: data.billing_cycle || null,
         nextDueDate: data.next_due_date ? new Date(data.next_due_date) : null,
         isActive: data.is_active ?? true,
+        paidAt: data.paid_at ? new Date(data.paid_at) : null,
       },
     });
     syncGateway.broadcast(userId, 'billing.created', item);
@@ -36,6 +37,9 @@ export class BillingService {
         }),
         ...(data.billing_cycle !== undefined && { billingCycle: data.billing_cycle }),
         ...(data.is_active !== undefined && { isActive: data.is_active }),
+        ...(data.paid_at !== undefined && {
+          paidAt: data.paid_at ? new Date(data.paid_at) : null,
+        }),
       },
     });
     syncGateway.broadcast(userId, 'billing.updated', item);

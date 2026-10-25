@@ -231,6 +231,7 @@ class SyncService {
         'next_due_date': clean.nextDueDate?.toUtc().toIso8601String(),
         'billing_cycle': clean.cycle?.apiValue,
         'is_active': clean.isActive,
+        'paid_at': clean.lastPaidAt?.toUtc().toIso8601String(),
       };
       try {
         await _api.post('/billing', data: body);

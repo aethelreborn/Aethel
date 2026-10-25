@@ -15,6 +15,7 @@ const billingBaseSchema = z.object({
   next_due_date: z.string().nullable().optional(),
   billing_cycle: z.enum(['DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']).nullable().optional(),
   is_active: z.boolean().optional(),
+  paid_at: z.string().nullable().optional(),
 });
 
 const billingUpdateSchema = billingBaseSchema.partial().omit({ id: true });

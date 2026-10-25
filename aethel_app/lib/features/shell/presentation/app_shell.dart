@@ -49,20 +49,27 @@ class AppShell extends ConsumerWidget {
       );
     }
 
+    final palette = context.aethel;
     return Scaffold(
       body: body,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
-        onDestinationSelected: (value) =>
-            ref.read(shellIndexProvider.notifier).state = value,
-        destinations: [
-          for (final destination in _destinations)
-            NavigationDestination(
-              icon: Icon(destination.icon),
-              selectedIcon: Icon(destination.selectedIcon),
-              label: destination.label,
-            ),
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: palette.surface,
+          border: Border(top: BorderSide(color: palette.line)),
+        ),
+        child: NavigationBar(
+          selectedIndex: index,
+          onDestinationSelected: (value) =>
+              ref.read(shellIndexProvider.notifier).state = value,
+          destinations: [
+            for (final destination in _destinations)
+              NavigationDestination(
+                icon: Icon(destination.icon),
+                selectedIcon: Icon(destination.selectedIcon),
+                label: destination.label,
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -10,15 +10,35 @@ export class BillingService {
   async create(userId: string, data: any) {
     const item = await prisma.billingItem.create({
       data: {
+        ...(data.id ? { id: data.id } : {}),
         userId,
         itemType: data.item_type || 'BILL',
         title: data.title,
         amountDue: data.amount_due,
         billingCycle: data.billing_cycle || null,
         nextDueDate: data.next_due_date ? new Date(data.next_due_date) : null,
+        isActive: data.is_active ?? true,
       },
     });
     syncGateway.broadcast(userId, 'billing.created', item);
+    return item;
+  }
+
+  async update(userId: string, id: string, data: any) {
+    const item = await prisma.billingItem.update({
+      where: { id, userId },
+      data: {
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.amount_due !== undefined && { amountDue: data.amount_due }),
+        ...(data.item_type !== undefined && { itemType: data.item_type }),
+        ...(data.next_due_date !== undefined && {
+          nextDueDate: data.next_due_date ? new Date(data.next_due_date) : null,
+        }),
+        ...(data.billing_cycle !== undefined && { billingCycle: data.billing_cycle }),
+        ...(data.is_active !== undefined && { isActive: data.is_active }),
+      },
+    });
+    syncGateway.broadcast(userId, 'billing.updated', item);
     return item;
   }
 
@@ -40,7 +60,12 @@ export class BillingService {
 
     const updated = await prisma.billingItem.update({
       where: { id, userId },
-      data: { paidAt: new Date(), nextDueDate: nextDate },
+      data: {
+        paidAt: new Date(),
+        nextDueDate: nextDate,
+        // A paid bill must be eligible for a fresh reminder next cycle.
+        lastNotifiedAt: null,
+      },
     });
     syncGateway.broadcast(userId, 'billing.marked_paid', updated);
     return updated;

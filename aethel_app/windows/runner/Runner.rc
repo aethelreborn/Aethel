@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.aethel" "\0"
-            VALUE "FileDescription", "aethel" "\0"
+            VALUE "CompanyName", "Aethel" "\0"
+            VALUE "FileDescription", "Aethel — Private Ledger" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "aethel" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.aethel. All rights reserved." "\0"
+            VALUE "InternalName", "Aethel" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Aethel. All rights reserved." "\0"
             VALUE "OriginalFilename", "aethel.exe" "\0"
-            VALUE "ProductName", "aethel" "\0"
+            VALUE "ProductName", "Aethel" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

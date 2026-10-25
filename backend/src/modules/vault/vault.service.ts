@@ -13,6 +13,7 @@ export class VaultService {
   async create(userId: string, data: any) {
     const item = await prisma.vaultItem.create({
       data: {
+        ...(data.id ? { id: data.id } : {}),
         userId,
         itemType: data.item_type || 'PASSWORD',
         title: data.title,

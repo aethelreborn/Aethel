@@ -4,60 +4,77 @@ import { sendPushNotification } from '../modules/notifications/notifications.ser
 
 /**
  * Runs every 10 minutes.
- * - Checks billing_items due within 24 h that haven't been notified.
- * - Checks study_schedules starting within 15 min that haven't been notified.
- * - Sends push notifications and stamps lastNotifiedAt (skips on markPaid).
+ * - Bills entering the next 24 hours get one reminder; paying resets the flag.
+ * - Recurring focus schedules are evaluated by local server time-of-day.
+ *
+ * Push bodies stay generic: the server only stores ciphertext titles and must
+ * never imply it knows what a vault item or bill contains.
  */
 export class DueDateCheckJob {
   static start() {
-    cron.schedule('*/10 * * * *', async () => {
-      try {
-        const now = new Date();
-        const billWindowEnd = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-        const scheduleWindowEnd = new Date(now.getTime() + 15 * 60 * 1000);
-
-        // Bills due within 24h that haven't been notified yet
-        const upcomingBills = await prisma.billingItem.findMany({
-          where: {
-            isActive: true,
-            nextDueDate: { gte: now, lte: billWindowEnd },
-            lastNotifiedAt: null,
-          },
-          select: { id: true, userId: true, title: true, nextDueDate: true },
-        });
-
-        for (const bill of upcomingBills) {
-          await sendPushNotification(bill.userId, {
-            title: `Bill Due: ${bill.title}`,
-            body: `Your ${bill.title} bill is due on ${bill.nextDueDate?.toLocaleDateString() ?? 'TBD'}.`,
-          });
-          await prisma.billingItem.update({
-            where: { id: bill.id },
-            data: { lastNotifiedAt: now },
-          });
-        }
-
-        // Study schedules starting within 15 min that haven't been notified
-        const upcomingSchedules = await prisma.studySchedule.findMany({
-          where: { startTime: { gte: now, lte: scheduleWindowEnd }, lastNotifiedAt: null },
-          select: { id: true, userId: true, label: true, startTime: true },
-        });
-
-        for (const sched of upcomingSchedules) {
-          await sendPushNotification(sched.userId, {
-            title: `Focus: ${sched.label}`,
-            body: `Your "${sched.label}" session starts in 15 minutes.`,
-          });
-          await prisma.studySchedule.update({
-            where: { id: sched.id },
-            data: { lastNotifiedAt: now },
-          });
-        }
-
-        console.log(`[DueDateCheck] Checked -> ${upcomingBills.length} bills, ${upcomingSchedules.length} schedules`);
-      } catch (err) {
-        console.error('[DueDateCheck] Error:', err);
-      }
+    cron.schedule('*/10 * * * *', () => {
+      void DueDateCheckJob.run();
     });
+  }
+
+  static async run() {
+    try {
+      const now = new Date();
+      const billWindowEnd = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+      const upcomingBills = await prisma.billingItem.findMany({
+        where: {
+          isActive: true,
+          nextDueDate: { gte: now, lte: billWindowEnd },
+          lastNotifiedAt: null,
+        },
+        select: { id: true, userId: true },
+      });
+
+      for (const bill of upcomingBills) {
+        await sendPushNotification(bill.userId, {
+          title: 'A bill is due soon',
+          body: 'Open Aethel to review the amount and mark it paid.',
+        });
+        await prisma.billingItem.update({
+          where: { id: bill.id },
+          data: { lastNotifiedAt: now },
+        });
+      }
+
+      const startOfToday = new Date(now);
+      startOfToday.setHours(0, 0, 0, 0);
+
+      const schedules = await prisma.studySchedule.findMany({
+        where: {
+          enabled: true,
+          daysOfWeek: { has: now.getDay() },
+          OR: [{ lastNotifiedAt: null }, { lastNotifiedAt: { lt: startOfToday } }],
+        },
+        select: { id: true, userId: true, startTime: true, lastNotifiedAt: true },
+      });
+
+      let scheduleCount = 0;
+      for (const schedule of schedules) {
+        const start = new Date(now);
+        start.setHours(schedule.startTime.getHours(), schedule.startTime.getMinutes(), 0, 0);
+        const minutesUntilStart = (start.getTime() - now.getTime()) / 60000;
+        if (minutesUntilStart < 0 || minutesUntilStart > 15) continue;
+
+        await sendPushNotification(schedule.userId, {
+          title: 'Your focus session starts soon',
+          body: 'Open Aethel to start your session on time.',
+        });
+        await prisma.studySchedule.update({
+          where: { id: schedule.id },
+          data: { lastNotifiedAt: now },
+        });
+        scheduleCount += 1;
+      }
+
+      console.log(`[DueDateCheck] ${upcomingBills.length} bills, ${scheduleCount} schedules`);
+    } catch (err) {
+      console.error('[DueDateCheck] Error:', err);
+    }
   }
 }

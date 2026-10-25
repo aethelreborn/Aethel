@@ -1,113 +1,107 @@
 import { prisma } from '../../config/db.js';
-import { Response, NextFunction } from 'express';
-import { fcm, isFcmConfigured } from '../../config/fcm.js';
+import { getFcm, isFcmConfigured } from '../../config/fcm.js';
 
-export async function registerDevice(
-  userId: string,
-  body: { pushToken?: string; id?: string; platform?: string },
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    let device;
-    if (body.id) {
-      device = await prisma.device.upsert({
-        where: { id: body.id },
-        create: { id: body.id, userId, pushToken: body.pushToken || 'local-only', platform: body.platform || 'web' },
-        update: { pushToken: body.pushToken, platform: body.platform || 'web', lastActive: new Date() },
-        select: { id: true, pushToken: true, platform: true },
-      });
-    } else {
-      // No device id provided - create a new device record
-      device = await prisma.device.create({
-        data: { userId, pushToken: body.pushToken || 'local-only', platform: body.platform || 'web' },
-        select: { id: true, pushToken: true, platform: true },
-      });
-    }
-    res.status(201).json(device);
-  } catch (err) { next(err as Error); }
-}
+export type DeviceInput = {
+  pushToken?: string;
+  id?: string;
+  platform?: string;
+};
 
-export async function listDevices(userId: string, res: Response, next: NextFunction) {
-  try {
-    const devices = await prisma.device.findMany({ where: { userId }, orderBy: { lastActive: 'desc' } });
-    res.json(devices);
-  } catch (err) { next(err as Error); }
-}
+const LOCAL_ONLY_TOKEN = 'local-only';
 
-export async function unregisterDevice(
-  userId: string,
-  paramId: string,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    const existing = await prisma.device.findFirst({ where: { id: paramId, userId } });
-    if (!existing) { res.status(404).json({ error: 'Device not found' }); return; }
-    await prisma.device.delete({ where: { id: paramId } });
-    res.json({ message: 'Device removed' });
-  } catch (err) { next(err as Error); }
-}
+export async function registerDevice(userId: string, body: DeviceInput) {
+  const platform = body.platform || 'unknown';
+  const pushToken = body.pushToken?.trim() || LOCAL_ONLY_TOKEN;
 
-/**
- * Register a device for push notifications (standalone function for programmatic use)
- */
-export async function registerDeviceForPush(
-  userId: string,
-  body: { pushToken?: string; id?: string; platform?: string }
-) {
   if (body.id) {
+    const existing = await prisma.device.findUnique({ where: { id: body.id } });
+    if (existing && existing.userId !== userId) {
+      throw new Error('Device already belongs to another account');
+    }
     return prisma.device.upsert({
       where: { id: body.id },
-      create: { id: body.id, userId, pushToken: body.pushToken || 'local-only', platform: body.platform || 'web' },
-      update: { pushToken: body.pushToken, platform: body.platform || 'web', lastActive: new Date() },
-      select: { id: true, pushToken: true, platform: true },
+      create: { id: body.id, userId, pushToken, platform },
+      update: { pushToken, platform, lastActive: new Date() },
+      select: { id: true, pushToken: true, platform: true, lastActive: true },
     });
   }
-  return prisma.device.create({
-    data: { userId, pushToken: body.pushToken || 'local-only', platform: body.platform || 'web' },
-    select: { id: true, pushToken: true, platform: true },
+
+  const existing = await prisma.device.findFirst({
+    where: { userId, pushToken },
+    select: { id: true },
   });
+  if (existing) {
+    return prisma.device.update({
+      where: { id: existing.id },
+      data: { platform, lastActive: new Date() },
+      select: { id: true, pushToken: true, platform: true, lastActive: true },
+    });
+  }
+
+  return prisma.device.create({
+    data: { userId, pushToken, platform },
+    select: { id: true, pushToken: true, platform: true, lastActive: true },
+  });
+}
+
+export async function listDevices(userId: string) {
+  return prisma.device.findMany({
+    where: { userId },
+    orderBy: { lastActive: 'desc' },
+    select: { id: true, platform: true, lastActive: true },
+  });
+}
+
+export async function unregisterDevice(userId: string, deviceId: string) {
+  const existing = await prisma.device.findFirst({ where: { id: deviceId, userId } });
+  if (!existing) throw new Error('Device not found');
+  await prisma.device.delete({ where: { id: deviceId } });
 }
 
 /**
- * Send push notifications to all devices for a user.
- * Falls back to logging only if FCM is not configured.
+ * Sends a push to every real FCM token for a user. Device records that were
+ * registered without a token ("local-only") are ignored so FCM never receives
+ * invalid registrations.
  */
-export async function sendPushNotification(userId: string, payload: { title: string; body: string }): Promise<number> {
+export async function sendPushNotification(
+  userId: string,
+  payload: { title: string; body: string },
+): Promise<number> {
   const devices = await prisma.device.findMany({ where: { userId } });
-  const tokens = devices.map(d => d.pushToken).filter(Boolean) as string[];
+  const tokens = devices
+    .map((device) => device.pushToken)
+    .filter((token): token is string => Boolean(token) && token !== LOCAL_ONLY_TOKEN);
 
-  // Always log to notification_logs for audit trail
+  if (tokens.length === 0) return 0;
+
   await prisma.notificationLog.createMany({
-    data: devices.map((d) => ({
-      userId,
-      channel: d.platform === 'ios' ? 'push_apns' : 'push_fcm',
-      message: JSON.stringify({ title: payload.title, body: payload.body }),
-    })),
+    data: devices
+      .filter((device) => tokens.includes(device.pushToken))
+      .map((device) => ({
+        userId,
+        channel: device.platform === 'ios' ? 'push_apns' : 'push_fcm',
+        message: JSON.stringify({ title: payload.title, body: payload.body }),
+      })),
   });
 
-  // If FCM is configured, send real pushes
-  if (isFcmConfigured() && tokens.length > 0) {
-    try {
-      const message = {
-        notification: {
-          title: payload.title,
-          body: payload.body,
-        },
-        data: { type: 'aethel_notification', title: payload.title, body: payload.body },
-        tokens,
-      };
-
-      const response = await fcm.sendEachForMulticast(message);
-      console.log(`[FCM] Sent ${response.successCount}/${tokens.length} push notifications`);
-      return response.successCount;
-    } catch (err: any) {
-      console.error('[FCM] Push failed:', err.message);
-    }
-  } else {
-    console.log(`[push] User ${userId}: ${payload.title} -> ${tokens.length} device(s) [FCM not configured, logged only]`);
+  const fcm = getFcm();
+  if (!fcm) {
+    console.log(`[push] User ${userId}: "${payload.title}" logged only (FCM not configured)`);
+    return 0;
   }
 
-  return devices.length;
+  try {
+    const response = await fcm.sendEachForMulticast({
+      notification: payload,
+      data: { type: 'aethel_notification', ...payload },
+      tokens,
+    });
+    console.log(`[FCM] Sent ${response.successCount}/${tokens.length} push notifications`);
+    return response.successCount;
+  } catch (err: any) {
+    console.error('[FCM] Push failed:', err.message);
+    return 0;
+  }
 }
+
+export { isFcmConfigured };

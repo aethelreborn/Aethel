@@ -105,6 +105,7 @@ model StudySchedule {
   endTime        DateTime  @map("end_time")
   daysOfWeek     Int[]     @map("days_of_week")
   blockedApps    String[]  @map("blocked_apps")
+  enabled        Boolean   @default(true)
   lastNotifiedAt DateTime? @map("last_notified_at")
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")

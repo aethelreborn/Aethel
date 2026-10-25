@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ZodSchema } from 'zod';
+import { ZodType } from 'zod';
 
 /**
  * Middleware: validate request body against a Zod schema.
@@ -7,7 +7,7 @@ import { ZodSchema } from 'zod';
  *
  * Usage: router.post('/', validateBody(mySchema), controller);
  */
-export function validateBody<T>(schema: ZodSchema<T>) {
+export function validateBody<T>(schema: ZodType<T>) {
   return (req: Request, res: Response, next: NextFunction): void => {
     const result = schema.safeParse(req.body);
     if (!result.success) {

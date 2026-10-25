@@ -181,6 +181,18 @@ class ApiClient {
       final value = data['error'] ?? data['message'];
       if (value is String && value.trim().isNotEmpty) message = value;
     }
+    // A build compiled without a vault server address can only reach
+    // localhost, which fails as a connection error or a timeout depending on
+    // the platform. Say so instead of blaming the network.
+    final unreachable = error.type == DioExceptionType.connectionError ||
+        error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.sendTimeout ||
+        error.type == DioExceptionType.receiveTimeout;
+    if (message == null && unreachable && !AppConfig.hasConfiguredServer) {
+      message = 'This copy of Aethel was built without a vault server address, '
+          'so it cannot sign in. Install a current build, or rebuild with '
+          '--dart-define=AETHEL_API_URL=https://your-server.';
+    }
     if (message == null) {
       switch (error.type) {
         case DioExceptionType.connectionTimeout:
@@ -189,14 +201,7 @@ class ApiClient {
           message = 'The vault server took too long to answer.';
           break;
         case DioExceptionType.connectionError:
-          // Distinguish a genuine network failure from a binary that was
-          // compiled without a vault server address (it can only reach
-          // localhost), which is otherwise indistinguishable to the user.
-          message = AppConfig.hasConfiguredServer
-              ? 'The vault server cannot be reached.'
-              : 'This copy of Aethel was built without a vault server address, '
-                  'so it cannot sign in. Install a current build, or rebuild '
-                  'with --dart-define=AETHEL_API_URL=https://your-server.';
+          message = 'The vault server cannot be reached.';
           break;
         case DioExceptionType.badResponse:
           message = status == 401

@@ -39,6 +39,44 @@ jobs:
           DATABASE_URL: postgresql://aethel:aethel@localhost:5432/aethel
       - run: npm run build
 
+  backend-boot:
+    name: Backend boot test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build -f backend/Dockerfile.production -t aethel-boot .
+      - name: Run container and probe /api/health
+        env:
+          PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: |
+          docker run -d --name boot -p 18080:10000 \
+            -e NODE_ENV=production \
+            -e PORT=10000 \
+            -e DATABASE_URL="$PROD_DATABASE_URL" \
+            -e JWT_SECRET="ci-boot-test-secret-ci-boot-test-secret-0123456789" \
+            -e JWT_REFRESH_SECRET="ci-boot-test-refresh-ci-boot-test-refresh-0123" \
+            -e FRONTEND_URL="https://aethel-dash.vercel.app" \
+            aethel-boot
+          ok=""
+          for i in $(seq 1 30); do
+            if curl -fsS --max-time 3 http://127.0.0.1:18080/api/health; then
+              echo; ok=1; break
+            fi
+            if [ "$(docker inspect -f '{{.State.Running}}' boot 2>/dev/null)" != "true" ]; then
+              echo "container exited early"; break
+            fi
+            sleep 2
+          done
+          echo "----- container logs -----"
+          docker logs boot || true
+          if [ -z "$ok" ]; then
+            echo "BOOT_FAILED exit=$(docker inspect -f '{{.State.ExitCode}}' boot 2>/dev/null)"
+            exit 1
+          fi
+          echo BOOT_OK
+
   flutter:
     name: Flutter checks
     runs-on: ubuntu-latest

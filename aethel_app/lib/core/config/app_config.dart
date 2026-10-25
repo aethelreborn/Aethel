@@ -16,19 +16,18 @@ class AppConfig {
     return 'http://localhost:3000';
   }
 
+  /// WebSocket shares the HTTP server (path `/ws`) so one exposed port
+  /// suffices on PaaS hosts; only an explicit override changes the target.
   static Uri get websocketUri {
     if (wsUrlOverride.isNotEmpty) return Uri.parse(wsUrlOverride);
 
     final api = Uri.parse(apiBaseUrl);
     final secure = api.scheme == 'https';
-    final port = api.hasPort
-        ? (api.port == 3000 ? 3001 : api.port)
-        : (secure ? 443 : 3001);
-
     return Uri(
       scheme: secure ? 'wss' : 'ws',
       host: api.host,
-      port: port,
+      port: api.hasPort ? api.port : (secure ? 443 : 80),
+      path: '/ws',
     );
   }
 

@@ -26,4 +26,3 @@ restartMaxRetries = 5
 #   JWT_REFRESH_SECRET=<same>
 #   FRONTEND_URL=https://your-app.vercel.app
 #   PORT=3000
-#   WS_PORT=3001

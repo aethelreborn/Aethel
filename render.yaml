@@ -1,0 +1,30 @@
+# Aethel — Render blueprint
+# https://render.com — free web service, sleeps after inactivity;
+# .github/workflows/keepalive.yml pings /api/health every 10 min to prevent sleep.
+services:
+  - type: web
+    name: aethel-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile.production
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      # Set from the Supabase transaction-pooler string after project creation
+      # (Render dashboard → Environment → DATABASE_URL) — never committed.
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      # Render free instances listen on $PORT.
+      - key: PORT
+        value: "10000"
+      # Filled in once the Vercel dashboard URL is known.
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false

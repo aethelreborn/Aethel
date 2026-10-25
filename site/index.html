@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aethel — Private Ledger</title>
+<meta name="description" content="Aethel is a private, zero-knowledge ledger for passwords, bills, and focused time. Your master password never leaves your device.">
+<meta name="theme-color" content="#F4F0E8">
+<meta property="og:title" content="Aethel — Private Ledger">
+<meta property="og:description" content="Zero-knowledge vault, billing reminders, and a focus timer. You keep the key.">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+  @font-face {
+    font-family: 'Fraunces';
+    src: url('fonts/Fraunces.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Manrope';
+    src: url('fonts/Manrope.ttf') format('truetype');
+    font-weight: 200 800;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --ground: #F4F0E8;
+    --surface: #FCFAF5;
+    --ink: #1C2422;
+    --muted: #545B58;
+    --teal: #1F5A54;
+    --teal-press: #174540;
+    --teal-soft: #E3ECE8;
+    --brass: #B08D57;
+    --brass-ink: #9A7942; /* text/focus on paper: 3.56:1 */
+    --line: #DCD4C5;
+    --line-soft: rgba(28, 36, 34, 0.07);
+    --cta-fg: #FFFFFF;
+    --serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+    --sans: 'Manrope', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #101715;
+      --surface: #17211E;
+      --ink: #E9E5DA;
+      --muted: #9AA39E;
+      --teal: #37897E;
+      --teal-press: #45A196;
+      --teal-soft: #1D2E2A;
+      --brass: #C9A469;
+      --brass-ink: #C9A469; /* 7.8:1 on dark ground */
+      --line: #2B3733;
+      --line-soft: rgba(233, 229, 218, 0.08);
+      --cta-fg: #0B1210;
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16.5px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection { background: var(--brass); color: #1C2422; }
+
+  a { color: inherit; }
+
+  .wrap {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 36px;
+  }
+
+  /* ── Header ─────────────────────────────────────────────── */
+  header {
+    border-bottom: 1px solid var(--line);
+    background: color-mix(in srgb, var(--ground) 92%, transparent);
+    backdrop-filter: blur(6px);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 76px;
+  }
+  .lockup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+  }
+  .lockup svg { display: block; }
+  .wordmark {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 25px;
+    letter-spacing: -0.6px;
+    line-height: 1;
+  }
+  .tag {
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 2.2px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .head nav {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+  }
+  .head nav a {
+    font-size: 14.5px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--muted);
+    transition: color 160ms ease;
+  }
+  .head nav a:hover { color: var(--ink); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 15px 26px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+  }
+  .btn-primary {
+    background: var(--teal);
+    color: var(--cta-fg);
+  }
+  .btn-primary:hover { background: var(--teal-press); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--line);
+  }
+  .btn-ghost:hover { border-color: var(--ink); }
+  .btn-sm { padding: 11px 20px; font-size: 13.5px; }
+
+  a:focus-visible, .btn:focus-visible {
+    outline: 2px solid var(--brass-ink);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* ── Hero ───────────────────────────────────────────────── */
+  .hero {
+    position: relative;
+    padding: 96px 0 72px;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 100%;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 47px,
+      var(--line-soft) 47px,
+      var(--line-soft) 48px
+    );
+    -webkit-mask-image: linear-gradient(to right, #000 0%, #000 54%, transparent 66%);
+    mask-image: linear-gradient(to right, #000 0%, #000 54%, transparent 66%);
+    pointer-events: none;
+  }
+  .hero-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: 72px;
+    align-items: start;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(44px, 5.6vw, 74px);
+    line-height: 1.02;
+    letter-spacing: -1.6px;
+    max-width: 13ch;
+  }
+  h1 .brass { color: var(--brass-ink); }
+  .lede {
+    margin-top: 28px;
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--muted);
+    max-width: 54ch;
+  }
+  .lede strong { color: var(--ink); font-weight: 600; }
+  .hero-cta {
+    margin-top: 36px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .hero-proof {
+    margin-top: 56px;
+    border-top: 1px solid var(--line);
+    padding-top: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 34px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .hero-proof span { display: inline-flex; align-items: center; gap: 9px; }
+  .hero-proof span::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    background: var(--brass);
+    border-radius: 50%;
+    flex: none;
+  }
+
+  /* Ledger card in hero */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 34px 32px;
+  }
+  .card-kicker {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.4px;
+  }
+  .card h2 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 30px;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+    margin-top: 8px;
+  }
+  .card ul { list-style: none; margin-top: 22px; }
+  .card li {
+    display: flex;
+    gap: 14px;
+    padding: 15px 0;
+    border-top: 1px solid var(--line);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .card li b {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 17px;
+    min-width: 74px;
+  }
+  .card li span { color: var(--muted); }
+  .card .fine {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+  .card .fine em {
+    font-style: normal;
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* ── Sections ───────────────────────────────────────────── */
+  section { padding: 78px 0; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 30px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 26px;
+    margin-bottom: 8px;
+  }
+  h2.big {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(30px, 3.6vw, 44px);
+    line-height: 1.08;
+    letter-spacing: -1px;
+    max-width: 18ch;
+  }
+  .section-note {
+    font-size: 15px;
+    color: var(--muted);
+    max-width: 38ch;
+    text-align: right;
+  }
+
+  /* Feature ledger rows */
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+    gap: 44px;
+    padding: 34px 0;
+    border-bottom: 1px solid var(--line);
+    align-items: start;
+  }
+  .row h3 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 31px;
+    letter-spacing: -0.6px;
+    line-height: 1.1;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+  .row h3 .mark { flex: none; }
+  .row p {
+    color: var(--muted);
+    max-width: 62ch;
+  }
+  .row p + p { margin-top: 12px; }
+  .row .detail {
+    display: inline-block;
+    margin-top: 16px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink);
+    border-bottom: 1px solid var(--brass);
+    padding-bottom: 2px;
+  }
+
+  /* ── Zero-knowledge split ───────────────────────────────── */
+  .zk { background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .zk-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: 72px;
+    align-items: start;
+  }
+  .zk h2.big { max-width: 12ch; }
+  .zk .lede { margin-top: 22px; }
+  .steps { list-style: none; }
+  .steps li {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 20px;
+    padding: 22px 0;
+    border-top: 1px solid var(--line);
+  }
+  .steps li:last-child { border-bottom: 1px solid var(--line); }
+  .steps .glyph {
+    font-family: var(--serif);
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--brass-ink);
+    line-height: 1.2;
+  }
+  .steps h3 {
+    font-size: 16.5px;
+    font-weight: 700;
+    margin-bottom: 5px;
+  }
+  .steps p { font-size: 15px; color: var(--muted); max-width: 58ch; }
+  code {
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.92em;
+    background: var(--teal-soft);
+    color: var(--ink);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  /* ── Downloads ──────────────────────────────────────────── */
+  .downloads-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 34px;
+  }
+  .dl {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 26px 24px 24px;
+    text-decoration: none;
+    transition: border-color 160ms ease, transform 160ms ease;
+  }
+  .dl:hover { border-color: var(--teal); transform: translateY(-2px); }
+  .dl .os {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 25px;
+    letter-spacing: -0.5px;
+  }
+  .dl .fmt { font-size: 14px; color: var(--muted); margin-top: 6px; }
+  .dl .note { font-size: 13px; color: var(--muted); margin-top: 10px; }
+  .dl .go {
+    margin-top: 22px;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--teal);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dl .go svg { transition: transform 160ms ease; }
+  .dl:hover .go svg { transform: translateY(3px); }
+
+  .dl-cta {
+    margin-top: 34px;
+    border-top: 1px solid var(--line);
+    padding-top: 26px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+  }
+  .dl-cta p { font-size: 14.5px; color: var(--muted); max-width: 58ch; }
+  .dl-cta p em { font-style: normal; color: var(--ink); font-weight: 600; }
+
+  /* ── Footer ─────────────────────────────────────────────── */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 44px 0 56px;
+  }
+  .foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 26px;
+    align-items: flex-end;
+  }
+  .foot .quote {
+    font-family: var(--serif);
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    max-width: 26ch;
+    line-height: 1.35;
+  }
+  .foot .quote span { color: var(--brass-ink); }
+  .foot-links {
+    display: flex;
+    gap: 24px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .foot-links a { text-decoration: none; }
+  .foot-links a:hover { color: var(--ink); }
+  .colophon {
+    margin-top: 34px;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+
+  /* ── Responsive ─────────────────────────────────────────── */
+  @media (max-width: 980px) {
+    .hero-grid, .zk-grid { grid-template-columns: 1fr; gap: 48px; }
+    .hero::before { -webkit-mask-image: none; mask-image: none; opacity: 0.6; }
+    .downloads-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .row { grid-template-columns: 1fr; gap: 14px; }
+    .section-note { text-align: left; max-width: 46ch; }
+    .section-head { flex-direction: column; gap: 14px; }
+  }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 0 20px; }
+    .head { height: 66px; }
+    .head nav a.hide-sm { display: none; }
+    .hero { padding: 56px 0 48px; }
+    h1 { letter-spacing: -1.1px; }
+    .lede { font-size: 16.5px; }
+    section { padding: 56px 0; }
+    .downloads-grid { grid-template-columns: 1fr; }
+    .card { padding: 26px 22px; }
+    .card li { flex-direction: column; gap: 4px; }
+    .steps li { grid-template-columns: 34px 1fr; gap: 14px; }
+    .foot { flex-direction: column; align-items: flex-start; }
+    .hero-cta .btn { width: 100%; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+    .dl:hover { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap head">
+    <a class="lockup" href="#" aria-label="Aethel home">
+      <svg width="38" height="38" viewBox="0 0 100 100" aria-hidden="true">
+        <rect x="0" y="0" width="100" height="100" rx="24" fill="#1F5A54"/>
+        <rect x="9" y="9" width="82" height="82" rx="17" fill="none" stroke="#B08D57" stroke-opacity="0.7" stroke-width="2.5"/>
+        <circle cx="50" cy="44" r="8.5" fill="#B08D57"/>
+        <path d="M46.5 50 h7 l-1.5 20 h-4 Z" fill="#B08D57"/>
+      </svg>
+      <span>
+        <span class="wordmark">Aethel</span>
+        <span class="tag" style="display:block">PRIVATE LEDGER</span>
+      </span>
+    </a>
+    <nav>
+      <a href="#ledger" class="hide-sm">What it does</a>
+      <a href="#privacy" class="hide-sm">Privacy</a>
+      <a href="#downloads">Downloads</a>
+      <a href="https://github.com/aethelreborn/Aethel" rel="noopener">GitHub&nbsp;↗</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ── Hero ─────────────────────────────────────────────── -->
+  <div class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <h1>Keep the keys to your life, <span class="brass">close.</span></h1>
+        <p class="lede">
+          Aethel is a private ledger for the things you cannot afford to lose —
+          passwords, cards, bills and your attention.
+          <strong>Your master password never leaves this device.</strong>
+          The server only ever sees ciphertext.
+        </p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="#downloads">Download Aethel</a>
+          <a class="btn btn-ghost" href="https://github.com/aethelreborn/Aethel" rel="noopener">Read the source</a>
+        </div>
+        <div class="hero-proof">
+          <span>Offline first, sync when you choose</span>
+          <span>Linux · Windows · macOS · Android · iOS · Web</span>
+          <span>Open source, no account required to inspect</span>
+        </div>
+      </div>
+
+      <aside class="card" aria-label="What Aethel holds">
+        <div class="card-kicker">A quieter place for important things</div>
+        <h2>One ledger, three habits.</h2>
+        <ul>
+          <li><b>Vault</b><span>Passwords, cards, notes and identities, sealed with AES-256-GCM before they touch the network.</span></li>
+          <li><b>Bills</b><span>Subscriptions and due dates with quiet reminders — names and amounts stay encrypted.</span></li>
+          <li><b>Focus</b><span>A timer for one task at a time, kept locally and shown back to you as the week you actually worked.</span></li>
+        </ul>
+        <p class="fine"><em>Lock the app and the key is wiped from memory.</em> Auto-lock after five idle minutes, or immediately with biometrics.</p>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ── Feature ledger ───────────────────────────────────── -->
+  <section id="ledger">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="big">What the ledger keeps.</h2>
+        <p class="section-note">Three lists, one key. Everything is written locally first and sealed before it travels.</p>
+      </div>
+
+      <div class="row">
+        <h3>
+          <svg class="mark" width="30" height="30" viewBox="0 0 100 100" aria-hidden="true">
+            <rect width="100" height="100" rx="24" fill="#1F5A54"/><rect x="9" y="9" width="82" height="82" rx="17" fill="none" stroke="#B08D57" stroke-opacity="0.7" stroke-width="2.5"/><circle cx="50" cy="44" r="8.5" fill="#B08D57"/><path d="M46.5 50 h7 l-1.5 20 h-4 Z" fill="#B08D57"/>
+          </svg>
+          The vault
+        </h3>
+        <div>
+          <p>Store passwords, cards, identities and plain notes. Search, filters and favourites all run against your decrypted copy on this device — no index of your entries ever exists on a server.</p>
+          <p>Copy a field, reveal it on a timer, generate a password from four character pools with a strength meter you can actually read.</p>
+          <span class="detail">PBKDF2 · AES-256-GCM · per-entry IVs</span>
+        </div>
+      </div>
+
+      <div class="row">
+        <h3>
+          <svg class="mark" width="30" height="30" viewBox="0 0 100 100" aria-hidden="true">
+            <rect width="100" height="100" rx="24" fill="#1F5A54"/><rect x="9" y="9" width="82" height="82" rx="17" fill="none" stroke="#B08D57" stroke-opacity="0.7" stroke-width="2.5"/><circle cx="50" cy="44" r="8.5" fill="#B08D57"/><path d="M46.5 50 h7 l-1.5 20 h-4 Z" fill="#B08D57"/>
+          </svg>
+          The bill ledger
+        </h3>
+        <div>
+          <p>Subscriptions, utilities and one-off payments with the rhythm they actually repeat on — daily to yearly, clamping correctly from 31 January to 28 February.</p>
+          <p>Due dates travel in the clear so a reminder can find you; the name and notes of every bill are encrypted JSON like everything else. Mark it paid with one press and the next due date advances itself.</p>
+          <span class="detail">Overdue · today · within seven days</span>
+        </div>
+      </div>
+
+      <div class="row">
+        <h3>
+          <svg class="mark" width="30" height="30" viewBox="0 0 100 100" aria-hidden="true">
+            <rect width="100" height="100" rx="24" fill="#1F5A54"/><rect x="9" y="9" width="82" height="82" rx="17" fill="none" stroke="#B08D57" stroke-opacity="0.7" stroke-width="2.5"/><circle cx="50" cy="44" r="8.5" fill="#B08D57"/><path d="M46.5 50 h7 l-1.5 20 h-4 Z" fill="#B08D57"/>
+          </svg>
+          Focus sessions
+        </h3>
+        <div>
+          <p>Name one task, choose fifteen to sixty minutes, and start. The timer keeps running if you leave the screen, pause, or close the lid — the remaining time is restored when you return.</p>
+          <p>Weekly bars show the sessions you finished; schedule windows block the hours you want kept clear.</p>
+          <span class="detail">Runs offline · resumes across restarts</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Zero knowledge ───────────────────────────────────── -->
+  <section class="zk" id="privacy">
+    <div class="wrap zk-grid">
+      <div>
+        <h2 class="big">The master password stays home.</h2>
+        <p class="lede">You type it once to derive two different things — a one-way verifier the server may keep, and the key that encrypts everything else, which never leaves the device. There is no reset flow because there is nothing to reset to.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <span class="glyph">→</span>
+          <div>
+            <h3>Derive locally, at signup or unlock</h3>
+            <p><code>PBKDF2-HMAC-SHA256</code>, 210,000 rounds, salted with your email. Two keys fall out of the derivation — and only one of them is ever allowed to leave.</p>
+          </div>
+        </li>
+        <li>
+          <span class="glyph">→</span>
+          <div>
+            <h3>Send the verifier, keep the key</h3>
+            <p>The first half becomes a base64 verifier the server checks against. The second half is your vault key: every entry is sealed with AES-256-GCM before it touches the network.</p>
+          </div>
+        </li>
+        <li>
+          <span class="glyph">→</span>
+          <div>
+            <h3>Wipe on lock, verify offline</h3>
+            <p>The key lives in memory only; an encrypted snapshot on this device lets you unlock with no connection, verified by a local key-check constant. Lock, auto-lock or biometrics wipe it again.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ── Downloads ────────────────────────────────────────── -->
+  <section id="downloads">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="big">Take it with you.</h2>
+        <p class="section-note">Every build comes from CI on the commit you can read. Pick your machine.</p>
+      </div>
+
+      <div class="downloads-grid">
+        <a class="dl" href="https://github.com/aethelreborn/Aethel/releases/latest/download/aethel-linux-x64.zip">
+          <span class="os">Linux</span>
+          <span class="fmt">x86-64 bundle · tarball in zip</span>
+          <span class="note">GTK · tested on Ubuntu &amp; Fedora</span>
+          <span class="go">Download <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1v8M2.5 6.5L6 10l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </a>
+        <a class="dl" href="https://github.com/aethelreborn/Aethel/releases/latest/download/aethel-windows-x64.zip">
+          <span class="os">Windows</span>
+          <span class="fmt">x64 desktop build · zip</span>
+          <span class="note">Windows 10 and later</span>
+          <span class="go">Download <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1v8M2.5 6.5L6 10l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </a>
+        <a class="dl" href="https://github.com/aethelreborn/Aethel/releases/latest/download/aethel-macos.zip">
+          <span class="os">macOS</span>
+          <span class="fmt">Aethel.app bundle · zip</span>
+          <span class="note">Apple silicon &amp; Intel</span>
+          <span class="go">Download <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1v8M2.5 6.5L6 10l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </a>
+        <a class="dl" href="https://github.com/aethelreborn/Aethel/releases/latest/download/aethel-android.zip">
+          <span class="os">Android</span>
+          <span class="fmt">APK + Play bundle · zip</span>
+          <span class="note">Android 8 and later · biometric unlock</span>
+          <span class="go">Download <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1v8M2.5 6.5L6 10l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </a>
+        <a class="dl" href="https://github.com/aethelreborn/Aethel/releases/latest/download/aethel-ios-unsigned.zip">
+          <span class="os">iOS</span>
+          <span class="fmt">Unsigned Runner.app · zip</span>
+          <span class="note">Sign with your own key in Xcode</span>
+          <span class="go">Download <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1v8M2.5 6.5L6 10l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </a>
+        <a class="dl" href="https://github.com/aethelreborn/Aethel/releases/latest/download/aethel-web.zip">
+          <span class="os">Web</span>
+          <span class="fmt">Hosted build · zip</span>
+          <span class="note">Or run it from any static host</span>
+          <span class="go">Download <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1v8M2.5 6.5L6 10l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </a>
+      </div>
+
+      <div class="dl-cta">
+        <p>Point a build at your own backend with <em>--dart-define=AETHEL_API_URL=…</em>, or use the hosted dashboard once it is live. Source, CI logs and issue tracker are one click away.</p>
+        <a class="btn btn-ghost btn-sm" href="https://github.com/aethelreborn/Aethel/releases" rel="noopener">All releases ↗</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <p class="quote">Aethel keeps the ciphertext. <span>You keep the key.</span></p>
+      <nav class="foot-links" aria-label="Footer">
+        <a href="https://github.com/aethelreborn/Aethel" rel="noopener">Source</a>
+        <a href="https://github.com/aethelreborn/Aethel/releases" rel="noopener">Releases</a>
+        <a href="https://github.com/aethelreborn/Aethel/issues" rel="noopener">Issues</a>
+        <a href="#privacy">Privacy</a>
+      </nav>
+    </div>
+    <p class="colophon">Aethel · Private Ledger · Released under an open-source licence. Fraunces &amp; Manrope under the SIL Open Font Licence.</p>
+  </div>
+</footer>
+
+</body>
+</html>

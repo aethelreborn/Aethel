@@ -44,7 +44,7 @@ app.use('/schedules', schedulesRoutes);
 app.use('/timeline', timelineRoutes);
 app.use('/devices', deviceRoutes);
 
-app.get('/health', (_req, res) => {
+app.get(['/health', '/api/health'], (_req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -58,11 +58,13 @@ app.use((_req, res) => {
 app.use(errorHandler);
 
 DueDateCheckJob.start();
-initSyncGateway(env.WS_PORT);
 
 const server = app.listen(env.PORT, () => {
+  // Attach the WebSocket gateway to the same HTTP server (path /ws) so
+  // hosts that expose a single port (Render, Railway) can serve both.
+  initSyncGateway(server);
   console.log(`[Server] http://localhost:${env.PORT}`);
-  console.log(`[WebSocket] ws://localhost:${env.WS_PORT}`);
+  console.log(`[WebSocket] ws://localhost:${env.PORT}/ws`);
   console.log(`[Push] ${isFcmConfigured() ? 'FCM configured' : 'disabled (optional)'}`);
 });
 

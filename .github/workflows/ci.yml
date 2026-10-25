@@ -213,6 +213,72 @@ jobs:
           path: aethel-windows-x64.zip
           if-no-files-found: error
 
+  pages:
+    name: Landing page
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  deploy-web:
+    name: Deploy dashboard
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [flutter]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check deploy credentials
+        id: guard
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          API_URL: ${{ vars.AETHEL_API_URL }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::VERCEL_TOKEN secret not set — skipping dashboard deploy."
+          elif [ -z "$API_URL" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::AETHEL_API_URL variable not set — skipping dashboard deploy."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: subosito/flutter-action@v2
+        if: steps.guard.outputs.ready == 'true'
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: Build web (production API URL baked in)
+        if: steps.guard.outputs.ready == 'true'
+        working-directory: aethel_app
+        env:
+          AETHEL_API_URL: ${{ vars.AETHEL_API_URL }}
+        run: |
+          flutter pub get
+          flutter build web --release --base-href / --dart-define=AETHEL_API_URL="$AETHEL_API_URL"
+      - name: Deploy to Vercel
+        if: steps.guard.outputs.ready == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: npx --yes vercel@65.2.0 deploy ./aethel_app/build/web --prod --yes --token "$VERCEL_TOKEN"
+
   release:
     name: Publish release
     if: startsWith(github.ref, 'refs/tags/v')
@@ -230,7 +296,7 @@ jobs:
         run: |
           mkdir -p release
           (cd dist/aethel-web && zip -qr ../release/aethel-web.zip .)
-          cp dist/aethel-linux-x64/aethel-linux-x64.tar.gz release/
+          (cd dist/aethel-linux-x64 && zip -qr ../release/aethel-linux-x64.zip .)
           cp dist/aethel-ios-unsigned/aethel-ios-unsigned.zip release/
           cp dist/aethel-macos/aethel-macos.zip release/
           cp dist/aethel-windows-x64/aethel-windows-x64.zip release/

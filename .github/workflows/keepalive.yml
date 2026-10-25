@@ -1,0 +1,40 @@
+# Pings the backend health endpoint every 10 minutes so free-tier instances
+# (Render) do not sleep. Set repository variable AETHEL_API_URL, e.g.
+#   gh variable set AETHEL_API_URL --body "https://aethel-api.onrender.com"
+name: Keep-alive
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keepalive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        env:
+          API_URL: ${{ vars.AETHEL_API_URL }}
+        run: |
+          if [ -z "$API_URL" ]; then
+            echo "AETHEL_API_URL not set — skipping."
+            exit 0
+          fi
+          for i in 1 2 3 4 5; do
+            if curl -fsS --max-time 60 "$API_URL/api/health"; then
+              echo ""
+              echo "Healthy: $API_URL/api/health"
+              exit 0
+            fi
+            echo "Attempt $i failed; retrying in 15s…"
+            sleep 15
+          done
+          echo "::error::Health endpoint failed after 5 attempts"
+          exit 1

@@ -1,4 +1,5 @@
 import { WebSocketServer, WebSocket } from 'ws';
+import type { Server as HttpServer } from 'node:http';
 import { prisma } from '../config/db.js';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
@@ -12,8 +13,15 @@ export class SyncGateway {
   // Map<userId, Set<ConnectedClient>> — supports multi-device fan-out
   private clients: Map<string, Set<ConnectedClient>> = new Map();
 
-  constructor(port: number) {
-    this.wss = new WebSocketServer({ port });
+  /**
+   * Attach to an existing HTTP server at path `/ws` (production: one port
+   * for REST + WebSocket), or listen on a dedicated port in development.
+   */
+  constructor(target: HttpServer | number) {
+    this.wss =
+      typeof target === 'number'
+        ? new WebSocketServer({ port: target })
+        : new WebSocketServer({ server: target, path: '/ws' });
 
     this.wss.on('connection', (incomingWs, req) => {
       const ws = incomingWs as ConnectedClient;
@@ -96,12 +104,12 @@ export class SyncGateway {
 let _instance: SyncGateway | null = null;
 
 export function getSyncGateway(): SyncGateway {
-  if (!_instance) throw new Error('SyncGateway not initialized — call init(port) first');
+  if (!_instance) throw new Error('SyncGateway not initialized — call initSyncGateway(server) first');
   return _instance;
 }
 
-export function initSyncGateway(port: number): SyncGateway {
-  _instance = new SyncGateway(port);
+export function initSyncGateway(target: HttpServer | number): SyncGateway {
+  _instance = new SyncGateway(target);
   return _instance;
 }
 

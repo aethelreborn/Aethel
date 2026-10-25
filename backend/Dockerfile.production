@@ -1,27 +1,29 @@
-# ── Production Dockerfile for Railway / any container host ────────
-# Multi-stage: builder compiles TS, slim runner carries only what's needed.
+# ── Production Dockerfile for Render / any container host ─────────
+# Multi-stage: builder installs ALL deps (typescript + prisma CLI are
+# needed to compile and generate the client), slim runtime carries only
+# what's needed. Migrations run at boot so schema stays current.
 FROM node:20-slim AS builder
 
 WORKDIR /app
-COPY backend/package*.json ./
-RUN npm ci --only=production --ignore-scripts
-
-COPY backend/tsconfig.json backend/src ./src/
-COPY backend/prisma ./prisma/
+COPY backend/package.json backend/package-lock.json ./
+RUN npm ci
+COPY backend/tsconfig.json ./tsconfig.json
+COPY backend/prisma ./prisma
 RUN npx prisma generate
+COPY backend/src ./src
 RUN npm run build
 
 # ── Runtime image ─────────────────────────────────────────────────
 FROM node:20-slim
 
 WORKDIR /app
-COPY --from=builder /app/dist     ./dist
+ENV NODE_ENV=production
+COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/prisma   ./prisma
+COPY --from=builder /app/prisma ./prisma
+COPY backend/package.json ./package.json
+
+EXPOSE 3000
 
 # Run Prisma migrations on every boot (safe no-op if already current)
-RUN npx prisma migrate deploy
-
-EXPOSE 3000 3001
-
-CMD ["node", "dist/server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]

@@ -428,6 +428,8 @@ jobs:
     permissions:
       contents: write
     steps:
+      # gh release needs a git repository for the tag/remote context.
+      - uses: actions/checkout@v4
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:

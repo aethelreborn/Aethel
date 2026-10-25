@@ -5,6 +5,12 @@
 FROM node:20-slim AS builder
 
 WORKDIR /app
+# Prisma's engine sniffing needs the openssl CLI; without it, generate
+# defaults to the openssl-1.1.x engine which cannot load on bookworm
+# (libssl.so.3 only) and the API dies with PrismaClientInitializationError.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
 COPY backend/package.json backend/package-lock.json ./
 RUN npm ci
 COPY backend/tsconfig.json ./tsconfig.json
@@ -18,6 +24,11 @@ FROM node:20-slim
 
 WORKDIR /app
 ENV NODE_ENV=production
+# Same detection at boot: the client picks the engine file via openssl
+# version probing, so the CLI must exist here too.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
@@ -26,6 +37,5 @@ COPY backend/package.json ./package.json
 EXPOSE 3000
 
 # Boot the API directly. Schema migrations are applied via
-# `npx prisma migrate deploy` (locally or in CI) — running them inside
-# the container is what crashed the first live deploy (nonZeroExit 1).
+# `npx prisma migrate deploy` (locally or in CI).
 CMD ["node", "dist/server.js"]

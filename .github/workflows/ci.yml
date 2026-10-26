@@ -394,6 +394,9 @@ jobs:
           elif [ -z "$API_URL" ]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "::notice::AETHEL_API_URL variable not set — skipping dashboard deploy."
+          elif ! npx --yes vercel@65.2.0 whoami --token "$VERCEL_TOKEN" >/dev/null 2>&1; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::error::VERCEL_TOKEN secret is present but invalid/expired — rotate it. Skipping dashboard deploy."
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi

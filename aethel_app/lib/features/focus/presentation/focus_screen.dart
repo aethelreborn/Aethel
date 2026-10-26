@@ -6,6 +6,7 @@ import '../../../app_providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/format.dart';
 import '../../../data/models.dart';
+import '../../../widgets/app_picker.dart';
 import '../../../widgets/page.dart';
 import '../../../widgets/paper.dart';
 import '../../../widgets/sheets.dart';
@@ -23,6 +24,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
   final _taskController = TextEditingController();
   int _minutes = 25;
   bool _starting = false;
+  List<String> _blocked = const [];
 
   @override
   void dispose() {
@@ -36,8 +38,19 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
     await ref.read(focusControllerProvider.notifier).start(
           task: _taskController.text,
           minutes: _minutes,
+          blockedApps: _blocked,
         );
     if (mounted) setState(() => _starting = false);
+  }
+
+  Future<void> _pickApps() async {
+    final picked = await showAppPicker(
+      context,
+      selected: _blocked,
+      subtitle: 'These stay closed until the session ends.',
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _blocked = picked);
   }
 
   Future<void> _end() async {
@@ -144,6 +157,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  _BlockAppsRow(selected: _blocked, onTap: _pickApps),
+                  const SizedBox(height: 16),
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final durations = Wrap(
@@ -234,6 +249,65 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
           const SizedBox(height: 16),
           _HistoryCard(sessions: sessions),
         ],
+      ),
+    );
+  }
+}
+
+class _BlockAppsRow extends StatelessWidget {
+  const _BlockAppsRow({required this.selected, required this.onTap});
+
+  final List<String> selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.aethel;
+    final textTheme = Theme.of(context).textTheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+        decoration: BoxDecoration(
+          color: palette.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: palette.line),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.block_rounded,
+              size: 18,
+              color: selected.isEmpty ? palette.muted : palette.teal,
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    selected.isEmpty
+                        ? 'Block apps while you focus'
+                        : '${selected.length} app${selected.length == 1 ? '' : 's'} blocked',
+                    style: textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    selected.isEmpty
+                        ? 'Nothing is blocked yet — tap to choose.'
+                        : selected.join(', '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodySmall
+                        ?.copyWith(color: palette.muted, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, size: 20, color: palette.muted),
+          ],
+        ),
       ),
     );
   }
@@ -485,9 +559,11 @@ class _WeekCard extends StatelessWidget {
                                 (minutesByDay[day]! / maxMinutes) *
                                     (day == days.last ? 56 : 48),
                             decoration: BoxDecoration(
-                              color: day == days.last
-                                  ? palette.brass
-                                  : palette.teal,
+                              color: minutesByDay[day] == 0
+                                  ? palette.line
+                                  : day == days.last
+                                      ? palette.brass
+                                      : palette.teal,
                               borderRadius: BorderRadius.circular(4),
                             ),
                           ),

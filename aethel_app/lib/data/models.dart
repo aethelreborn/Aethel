@@ -545,6 +545,7 @@ class FocusRun {
     required this.minutes,
     required this.startedAt,
     required this.endsAt,
+    this.blockedApps = const [],
     this.paused = false,
     this.pausedRemainingSeconds,
   });
@@ -553,6 +554,10 @@ class FocusRun {
   final int minutes;
   final DateTime startedAt;
   final DateTime endsAt;
+
+  /// App names to keep out of reach while this run is active. Resolved into
+  /// local packages by the platform at the moment the block starts.
+  final List<String> blockedApps;
   final bool paused;
   final int? pausedRemainingSeconds;
 
@@ -567,6 +572,7 @@ class FocusRun {
         minutes: minutes,
         startedAt: startedAt,
         endsAt: endsAt,
+        blockedApps: blockedApps,
         paused: true,
         pausedRemainingSeconds: remainingSeconds(now),
       );
@@ -576,6 +582,7 @@ class FocusRun {
         minutes: minutes,
         startedAt: startedAt,
         endsAt: now.add(Duration(seconds: pausedRemainingSeconds ?? 0)),
+        blockedApps: blockedApps,
       );
 
   Map<String, dynamic> toJson() => {
@@ -583,6 +590,7 @@ class FocusRun {
         'minutes': minutes,
         'startedAt': startedAt.toIso8601String(),
         'endsAt': endsAt.toIso8601String(),
+        'blockedApps': blockedApps,
         'paused': paused,
         'pausedRemainingSeconds': pausedRemainingSeconds,
       };
@@ -593,6 +601,10 @@ class FocusRun {
       minutes: _int(json['minutes']),
       startedAt: _date(json['startedAt']),
       endsAt: _date(json['endsAt']),
+      blockedApps: (json['blockedApps'] as List?)
+              ?.map((value) => value.toString())
+              .toList() ??
+          const [],
       paused: _bool(json['paused']),
       pausedRemainingSeconds: json['pausedRemainingSeconds'] == null
           ? null

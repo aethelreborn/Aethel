@@ -6,6 +6,7 @@ import '../../../app_providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/data_actions.dart';
 import '../../../data/models.dart';
+import '../../../widgets/app_picker.dart';
 import '../../../widgets/page.dart';
 import '../../../widgets/sheets.dart';
 
@@ -38,7 +39,7 @@ class _ScheduleEditorSheetState extends State<_ScheduleEditorSheet> {
 
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _label;
-  late final TextEditingController _apps;
+  late List<String> _blocked;
   late int _start;
   late int _end;
   late Set<int> _days;
@@ -51,7 +52,7 @@ class _ScheduleEditorSheetState extends State<_ScheduleEditorSheet> {
     super.initState();
     final item = widget.item;
     _label = TextEditingController(text: item?.label ?? '');
-    _apps = TextEditingController(text: item?.blockedApps.join(', ') ?? '');
+    _blocked = List<String>.of(item?.blockedApps ?? const []);
     _start = item?.startMinutes ?? 9 * 60;
     _end = item?.endMinutes ?? 11 * 60;
     _days = item?.days.toSet() ?? {1, 2, 3, 4, 5};
@@ -61,7 +62,6 @@ class _ScheduleEditorSheetState extends State<_ScheduleEditorSheet> {
   @override
   void dispose() {
     _label.dispose();
-    _apps.dispose();
     super.dispose();
   }
 
@@ -90,6 +90,16 @@ class _ScheduleEditorSheetState extends State<_ScheduleEditorSheet> {
     });
   }
 
+  Future<void> _pickApps() async {
+    final picked = await showAppPicker(
+      context,
+      selected: _blocked,
+      subtitle: 'Closed for the whole window, on every one of its days.',
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _blocked = picked);
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_days.isEmpty) {
@@ -112,11 +122,7 @@ class _ScheduleEditorSheetState extends State<_ScheduleEditorSheet> {
       startMinutes: _start,
       endMinutes: _end,
       days: _days,
-      blockedApps: _apps.text
-          .split(',')
-          .map((value) => value.trim())
-          .where((value) => value.isNotEmpty)
-          .toList(),
+      blockedApps: _blocked,
       enabled: _enabled,
       pending: true,
       createdAt: existing?.createdAt ?? now,
@@ -224,14 +230,11 @@ class _ScheduleEditorSheetState extends State<_ScheduleEditorSheet> {
                   const SizedBox(height: 18),
                   const FieldLabel(
                     'Blocked apps',
-                    hint: 'Optional, comma separated',
+                    hint: 'Optional, choose from this device',
                   ),
-                  TextFormField(
-                    controller: _apps,
-                    textCapitalization: TextCapitalization.none,
-                    decoration: const InputDecoration(
-                      hintText: 'Instagram, X, YouTube',
-                    ),
+                  _AppsField(
+                    selected: _blocked,
+                    onTap: _pickApps,
                   ),
                   const SizedBox(height: 16),
                   Container(
@@ -289,6 +292,81 @@ class _ScheduleEditorSheetState extends State<_ScheduleEditorSheet> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _AppsField extends StatelessWidget {
+  const _AppsField({required this.selected, required this.onTap});
+
+  final List<String> selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.aethel;
+    final textTheme = Theme.of(context).textTheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+        decoration: BoxDecoration(
+          color: palette.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: palette.line),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.block_rounded,
+                  size: 18,
+                  color: selected.isEmpty ? palette.muted : palette.teal,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    selected.isEmpty
+                        ? 'Nothing blocked yet — tap to choose apps'
+                        : '${selected.length} app${selected.length == 1 ? '' : 's'} blocked',
+                    style: textTheme.bodyMedium,
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded,
+                    size: 20, color: palette.muted),
+              ],
+            ),
+            if (selected.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final name in selected)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: palette.ground,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: palette.line),
+                      ),
+                      child: Text(
+                        name,
+                        style: textTheme.labelSmall
+                            ?.copyWith(color: palette.ink),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

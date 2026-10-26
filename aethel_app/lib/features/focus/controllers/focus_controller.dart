@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/network/sync_service.dart';
+import '../../../core/platform/device_services.dart';
 import '../../../core/storage/local_store.dart';
 import '../../../data/models.dart';
 
@@ -56,21 +57,44 @@ class FocusController extends StateNotifier<FocusState> {
       return;
     }
     state = FocusState(run: run, remainingSeconds: remaining);
-    if (!run.paused) _startTicker();
+    if (!run.paused) {
+      _startTicker();
+      _applyBlock(run);
+    }
   }
 
-  Future<void> start({required String task, required int minutes}) async {
+  Future<void> start({
+    required String task,
+    required int minutes,
+    List<String> blockedApps = const [],
+  }) async {
     final now = DateTime.now();
     final run = FocusRun(
       task: task.trim().isEmpty ? 'Deep work' : task.trim(),
       minutes: minutes,
       startedAt: now,
       endsAt: now.add(Duration(minutes: minutes)),
+      blockedApps: blockedApps,
     );
     _local.snapshot.activeFocus = run;
     await _local.save();
     state = FocusState(run: run, remainingSeconds: minutes * 60);
     _startTicker();
+    _applyBlock(run);
+  }
+
+  /// Starts the platform block screen for this run. Fails quietly on platforms
+  /// without a blocker — the timer still works, it just cannot intercept apps.
+  void _applyBlock(FocusRun run) {
+    if (run.blockedApps.isEmpty || run.paused) return;
+    unawaited(DeviceServices.instance.startBlock(
+      names: run.blockedApps,
+      until: run.endsAt,
+    ));
+  }
+
+  void _clearBlock() {
+    unawaited(DeviceServices.instance.stopBlock());
   }
 
   Future<void> pause() async {
@@ -80,6 +104,7 @@ class FocusController extends StateNotifier<FocusState> {
     _local.snapshot.activeFocus = paused;
     await _local.save();
     _ticker?.cancel();
+    _clearBlock();
     state = state.copyWith(
       run: paused,
       remainingSeconds: paused.pausedRemainingSeconds,
@@ -97,10 +122,12 @@ class FocusController extends StateNotifier<FocusState> {
       remainingSeconds: resumed.remainingSeconds(DateTime.now()),
     );
     _startTicker();
+    _applyBlock(resumed);
   }
 
   Future<void> cancel() async {
     _ticker?.cancel();
+    _clearBlock();
     _local.snapshot.activeFocus = null;
     await _local.save();
     state = const FocusState();
@@ -127,6 +154,7 @@ class FocusController extends StateNotifier<FocusState> {
 
   Future<void> _complete(FocusRun run) async {
     _ticker?.cancel();
+    _clearBlock();
     final session = FocusSession(
       id: const Uuid().v4(),
       task: run.task,
@@ -145,6 +173,7 @@ class FocusController extends StateNotifier<FocusState> {
   @override
   void dispose() {
     _ticker?.cancel();
+    _clearBlock();
     super.dispose();
   }
 }

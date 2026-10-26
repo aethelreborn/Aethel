@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../app_providers.dart';
 import '../../../core/network/sync_service.dart';
+import '../../../core/platform/permission_catalog.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../widgets/page.dart';
+import '../../../widgets/password_strength.dart';
 import '../../../widgets/paper.dart';
 import '../../../widgets/sheets.dart';
+import '../../../widgets/update_dialog.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -239,6 +243,7 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
+          const _PermissionsSection(),
           _Section(
             title: 'Data & sync',
             children: [
@@ -297,11 +302,7 @@ class SettingsScreen extends ConsumerWidget {
                 subtitle: 'AES-256-GCM · PBKDF2-HMAC-SHA256 · 210,000 rounds',
               ),
               Divider(height: 1, color: palette.line),
-              const _Row(
-                icon: Icons.info_outline_rounded,
-                title: 'Version',
-                subtitle: 'Aethel 1.0.0',
-              ),
+              const _VersionRow(),
             ],
           ),
           const SizedBox(height: 20),
@@ -374,6 +375,167 @@ class SettingsScreen extends ConsumerWidget {
     if (deleted == true && context.mounted) {
       showMessage(context, 'Your account and vault were deleted.');
     }
+  }
+}
+
+/// The permissions this device actually has something to say about.
+/// Renders nothing on platforms where neither feature needs permission.
+class _PermissionsSection extends StatefulWidget {
+  const _PermissionsSection();
+
+  @override
+  State<_PermissionsSection> createState() => _PermissionsSectionState();
+}
+
+class _PermissionsSectionState extends State<_PermissionsSection>
+    with WidgetsBindingObserver {
+  List<PermissionEntry> _entries = const [];
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _load();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Back from a system settings screen — read whatever they changed.
+    if (state == AppLifecycleState.resumed) _load();
+  }
+
+  Future<void> _load() async {
+    final entries = await PermissionCatalog.load();
+    if (mounted) setState(() => _entries = entries);
+  }
+
+  Future<void> _act(PermissionEntry entry) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final entries = await PermissionCatalog.request(entry);
+    if (!mounted) return;
+    setState(() {
+      _entries = entries;
+      _busy = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_entries.isEmpty) return const SizedBox.shrink();
+    final palette = context.aethel;
+    return Column(
+      children: [
+        _Section(
+          title: 'Permissions',
+          children: [
+            for (var index = 0; index < _entries.length; index++) ...[
+              if (index > 0) Divider(height: 1, color: palette.line),
+              _PermissionRow(entry: _entries[index], onAct: () => _act(_entries[index])),
+            ],
+          ],
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+}
+
+class _PermissionRow extends StatelessWidget {
+  const _PermissionRow({required this.entry, required this.onAct});
+
+  final PermissionEntry entry;
+  final VoidCallback onAct;
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget trailing = switch (entry.stage) {
+      PermissionStage.granted => const StatusPill(
+          label: 'Granted',
+          tone: PillTone.teal,
+          icon: Icons.check_rounded,
+        ),
+      PermissionStage.notNeeded =>
+        const StatusPill(label: 'Not needed'),
+      PermissionStage.blocked => TextButton(
+          onPressed: onAct,
+          child: const Text('Settings'),
+        ),
+      _ => TextButton(
+          onPressed: onAct,
+          child: const Text('Allow'),
+        ),
+    };
+    return _Row(
+      icon: entry.key == 'reminders'
+          ? Icons.notifications_none_rounded
+          : Icons.apps_outlined,
+      title: entry.title,
+      subtitle: entry.detail,
+      trailing: trailing,
+      onTap: entry.needsAction ? onAct : null,
+    );
+  }
+}
+
+/// Installed version, and the hand-rolled path to a newer one.
+class _VersionRow extends ConsumerStatefulWidget {
+  const _VersionRow();
+
+  @override
+  ConsumerState<_VersionRow> createState() => _VersionRowState();
+}
+
+class _VersionRowState extends ConsumerState<_VersionRow> {
+  String _version = '';
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then(
+      (info) {
+        if (mounted) setState(() => _version = info.version);
+      },
+      onError: (_) {
+        if (mounted) setState(() => _version = 'unknown');
+      },
+    );
+  }
+
+  Future<void> _check() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final dialogContext = context;
+    await promptUpdateIfAvailable(dialogContext, ref, force: true);
+    if (mounted) setState(() => _busy = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _Row(
+      icon: Icons.info_outline_rounded,
+      title: 'Version',
+      subtitle: _version.isEmpty ? 'Aethel' : 'Aethel $_version',
+      trailing: _busy
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : TextButton(
+              onPressed: _check,
+              child: const Text('Check for updates'),
+            ),
+      onTap: _busy ? null : _check,
+    );
   }
 }
 
@@ -570,6 +732,8 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                       return null;
                     },
                   ),
+                  const SizedBox(height: 10),
+                  PasswordStrengthMeter(controller: _new),
                   const SizedBox(height: 16),
                   const FieldLabel('Repeat the new password'),
                   _SecretField(

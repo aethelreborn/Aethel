@@ -15,4 +15,10 @@
     <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
+    <!-- Theme for the focus-mode block screen -->
+    <style name="BlockTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/aethel_paper</item>
+        <item name="android:statusBarColor">@color/aethel_paper</item>
+        <item name="android:navigationBarColor">@color/aethel_paper</item>
+    </style>
 </resources>

@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:aethel/core/crypto/crypto_service.dart';
 import 'package:aethel/core/utils/password_tools.dart';
 import 'package:aethel/data/models.dart';
+import 'package:aethel/widgets/password_strength.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -92,6 +94,45 @@ void main() {
       final next = BillingCycle.monthly.advance(DateTime.utc(2026, 1, 31));
       expect(next.month, DateTime.february);
       expect(next.day, 28);
+    });
+  });
+
+  group('password strength meter', () {
+    testWidgets('moves with every keystroke, without a submit', (tester) async {
+      final controller = TextEditingController();
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                TextField(controller: controller),
+                PasswordStrengthMeter(controller: controller),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text(PasswordStrengthBar.hintFor(0)), findsOneWidget);
+      expect(find.text(passwordStrengthLabel(0)), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField), 'abcdefghij');
+      await tester.pump();
+
+      expect(find.text(PasswordStrengthBar.hintFor(1)), findsOneWidget);
+      expect(find.text(passwordStrengthLabel(1)), findsOneWidget);
+      expect(find.text(PasswordStrengthBar.hintFor(0)), findsNothing);
+
+      await tester.enterText(
+        find.byType(TextField),
+        'Correct-Horse-9-Battery',
+      );
+      await tester.pump();
+
+      expect(find.text(PasswordStrengthBar.hintFor(4)), findsOneWidget);
+      expect(find.text(passwordStrengthLabel(4)), findsOneWidget);
     });
   });
 }

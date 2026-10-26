@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="aethel_paper">#101715</color>
+    <color name="aethel_teal">#72B7AE</color>
+    <color name="aethel_brass">#D3B178</color>
+    <color name="aethel_ink">#F1EEE5</color>
+    <color name="aethel_muted">#9DA9A3</color>
 </resources>

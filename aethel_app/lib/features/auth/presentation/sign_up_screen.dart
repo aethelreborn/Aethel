@@ -6,6 +6,7 @@ import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/password_tools.dart';
 import '../../../widgets/page.dart';
+import '../../../widgets/password_strength.dart';
 import 'auth_frame.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -58,7 +59,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     final palette = context.aethel;
     final textTheme = Theme.of(context).textTheme;
     final busy = session.busy || _submitted;
-    final strength = passwordStrength(_password.text);
 
     return AuthFrame(
       headline: 'A fresh page, sealed.',
@@ -139,7 +139,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 },
               ),
               const SizedBox(height: 10),
-              _StrengthMeter(score: strength),
+              PasswordStrengthMeter(controller: _password),
               const SizedBox(height: 14),
               PasswordField(
                 controller: _confirm,
@@ -209,51 +209,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _StrengthMeter extends StatelessWidget {
-  const _StrengthMeter({required this.score});
-
-  final int score;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.aethel;
-    final color = switch (score) {
-      <= 1 => palette.danger,
-      2 => palette.brass,
-      _ => palette.teal,
-    };
-    return Row(
-      children: [
-        for (var index = 0; index < 4; index++) ...[
-          Expanded(
-            child: AnimatedContainer(
-              duration: MediaQuery.disableAnimationsOf(context)
-                  ? Duration.zero
-                  : const Duration(milliseconds: 160),
-              height: 4,
-              decoration: BoxDecoration(
-                color: index < score ? color : palette.line,
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
-          if (index < 3) const SizedBox(width: 5),
-        ],
-        const SizedBox(width: 10),
-        SizedBox(
-          width: 62,
-          child: Text(
-            passwordStrengthLabel(score),
-            textAlign: TextAlign.right,
-            style:
-                Theme.of(context).textTheme.labelSmall?.copyWith(color: color),
-          ),
-        ),
-      ],
     );
   }
 }

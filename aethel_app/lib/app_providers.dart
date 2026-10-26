@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/network/sync_service.dart';
+import 'core/notifications/reminder_service.dart';
 import 'core/storage/local_store.dart';
 import 'core/storage/secure_store.dart';
 import 'data/data_actions.dart';
@@ -86,3 +89,13 @@ final focusSessionsProvider = Provider<List<FocusSession>>((ref) {
 final shellIndexProvider = StateProvider<int>((ref) => 0);
 
 final dataActionsProvider = Provider<DataActions>((ref) => DataActions());
+
+/// Rebuilds the scheduled reminders whenever schedules or bills change, so
+/// what the platform has queued always mirrors the vault.
+final reminderSyncProvider = Provider<void>((ref) {
+  final schedules = ref.watch(scheduleItemsProvider);
+  final bills = ref.watch(billItemsProvider);
+  unawaited(
+    ReminderService.instance.sync(schedules: schedules, bills: bills),
+  );
+});

@@ -5,13 +5,15 @@ import '../../../app_providers.dart';
 import '../../../core/network/sync_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../widgets/brand.dart';
+import '../../../widgets/permission_coach.dart';
+import '../../../widgets/update_dialog.dart';
 import '../../bills/presentation/bills_screen.dart';
 import '../../dashboard/presentation/dashboard_screen.dart';
 import '../../focus/presentation/focus_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
 import '../../vault/presentation/vault_screen.dart';
 
-class AppShell extends ConsumerWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
 
   static const _destinations = <_Destination>[
@@ -33,10 +35,40 @@ class AppShell extends ConsumerWidget {
   ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
+  bool _welcomed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _welcome());
+  }
+
+  /// First run inside the unlocked shell: explain the permissions it needs,
+  /// then quietly look for a newer build. Runs once per session, never twice.
+  Future<void> _welcome() async {
+    if (_welcomed) return;
+    _welcomed = true;
+    // Let the unlock transition settle before anything talks to the user.
+    await Future<void>.delayed(const Duration(milliseconds: 700));
+    if (!mounted) return;
+    final prefs = ref.read(sharedPreferencesProvider);
+    await showPermissionCoachOnce(context, prefs);
+    if (!mounted) return;
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+    await promptUpdateIfAvailable(context, ref);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.watch(reminderSyncProvider);
     final index = ref.watch(shellIndexProvider);
     final wide = MediaQuery.sizeOf(context).width >= 1000;
-    final body = IndexedStack(index: index, children: _screens);
+    final body = IndexedStack(index: index, children: AppShell._screens);
 
     if (wide) {
       return Scaffold(
@@ -62,7 +94,7 @@ class AppShell extends ConsumerWidget {
           onDestinationSelected: (value) =>
               ref.read(shellIndexProvider.notifier).state = value,
           destinations: [
-            for (final destination in _destinations)
+            for (final destination in AppShell._destinations)
               NavigationDestination(
                 icon: Icon(destination.icon),
                 selectedIcon: Icon(destination.selectedIcon),

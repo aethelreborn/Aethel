@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app_providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../widgets/page.dart';
+import '../../../widgets/password_strength.dart';
 import 'auth_frame.dart';
 
 class SignInScreen extends ConsumerStatefulWidget {
@@ -115,6 +116,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 10),
+              PasswordStrengthMeter(controller: _password),
               const SizedBox(height: 22),
               FilledButton(
                 onPressed: busy ? null : _submit,

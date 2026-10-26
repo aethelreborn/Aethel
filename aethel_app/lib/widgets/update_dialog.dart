@@ -91,7 +91,8 @@ class _UpdateSheetState extends State<UpdateSheet> {
   @override
   Widget build(BuildContext context) {
     final palette = context.aethel;
-    final notes = _info.notes.split('\n').where((line) => line.trim().isNotEmpty);
+    final notes =
+        _info.notes.split('\n').where((line) => line.trim().isNotEmpty);
     final percent = _progress == null ? null : '${(_progress! * 100).round()}%';
 
     return SafeArea(
@@ -133,7 +134,9 @@ class _UpdateSheetState extends State<UpdateSheet> {
                           ),
                           Expanded(
                             child: Text(
-                              line.trim().replaceFirst(RegExp(r'^[-*•]\s*'), ''),
+                              line
+                                  .trim()
+                                  .replaceFirst(RegExp(r'^[-*•]\s*'), ''),
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall

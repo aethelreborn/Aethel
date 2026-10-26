@@ -238,8 +238,8 @@ class ReminderService {
   /// First start of [schedule] that is still in the future.
   static DateTime? _nextWindowStart(FocusSchedule schedule, DateTime now) {
     for (var offset = 0; offset <= 7; offset++) {
-      final day = DateTime(now.year, now.month, now.day)
-          .add(Duration(days: offset));
+      final day =
+          DateTime(now.year, now.month, now.day).add(Duration(days: offset));
       // DateTime.weekday: Mon = 1 … Sun = 7, matching FocusSchedule.days.
       if (!schedule.days.contains(day.weekday)) continue;
       final start = day.add(Duration(minutes: schedule.startMinutes));

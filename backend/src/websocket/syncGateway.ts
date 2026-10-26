@@ -98,7 +98,8 @@ export class SyncGateway {
         userSet = new Set<ConnectedClient>();
         this.clients.set(payload.userId, userSet);
       }
-      userSet.add(ws);
+      try {
+        userSet.add(ws);
 
         console.log(`[WS] User ${payload.userId} connected`);
 

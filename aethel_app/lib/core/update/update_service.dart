@@ -49,7 +49,8 @@ class UpdateService {
   /// Returns a release newer than the installed build, or null when there is
   /// nothing to do (throttled, already snoozed, or the check failed — an
   /// update check must never break startup).
-  Future<UpdateInfo?> check(SharedPreferences prefs, {bool force = false}) async {
+  Future<UpdateInfo?> check(SharedPreferences prefs,
+      {bool force = false}) async {
     final stamp = DateTime.now();
     if (!force) {
       final last = prefs.getInt(lastCheckKey) ?? 0;
@@ -167,10 +168,12 @@ class UpdateService {
           return ok ? UpdateOutcome.installed : UpdateOutcome.failed;
         case TargetPlatform.linux:
           await Process.run('chmod', ['+x', path]);
-          await Process.start(path, <String>[], mode: ProcessStartMode.detached);
+          await Process.start(path, <String>[],
+              mode: ProcessStartMode.detached);
           return _leaveAndRelaunch();
         case TargetPlatform.windows:
-          await Process.start(path, <String>[], mode: ProcessStartMode.detached);
+          await Process.start(path, <String>[],
+              mode: ProcessStartMode.detached);
           return _leaveAndRelaunch();
         case TargetPlatform.macOS:
           await Process.start('open', [path], mode: ProcessStartMode.detached);

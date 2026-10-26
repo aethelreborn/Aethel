@@ -158,11 +158,13 @@ class _AppPickerSheetState extends State<_AppPickerSheet> {
                         textInputAction: TextInputAction.search,
                         decoration: InputDecoration(
                           hintText: 'Search apps',
-                          prefixIcon: const Icon(Icons.search_rounded, size: 19),
+                          prefixIcon:
+                              const Icon(Icons.search_rounded, size: 19),
                           suffixIcon: _search.text.isEmpty
                               ? null
                               : IconButton(
-                                  icon: const Icon(Icons.close_rounded, size: 17),
+                                  icon:
+                                      const Icon(Icons.close_rounded, size: 17),
                                   onPressed: () {
                                     _search.clear();
                                     setState(() {});
@@ -216,10 +218,8 @@ class _AppPickerSheetState extends State<_AppPickerSheet> {
                                           children: [
                                             Icon(
                                               checked
-                                                  ? Icons
-                                                      .check_circle_rounded
-                                                  : Icons
-                                                      .circle_outlined,
+                                                  ? Icons.check_circle_rounded
+                                                  : Icons.circle_outlined,
                                               size: 21,
                                               color: checked
                                                   ? palette.teal

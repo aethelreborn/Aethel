@@ -70,7 +70,8 @@ class DeviceServices {
     }
   }
 
-  bool get _isAndroid => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  bool get _isAndroid =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
   bool get _isDesktop =>
       !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.linux ||
@@ -191,8 +192,7 @@ class DeviceServices {
             RegExp(r'^Hidden=true', multiLine: true).hasMatch(contents)) {
           continue;
         }
-        if (!RegExp(r'^Type=Application', multiLine: true)
-            .hasMatch(contents)) {
+        if (!RegExp(r'^Type=Application', multiLine: true).hasMatch(contents)) {
           continue;
         }
         final name = RegExp(r'^Name=(.+)$', multiLine: true)
@@ -245,9 +245,8 @@ class DeviceServices {
       for (final entry in dir.listSync(followLinks: false)) {
         if (entry is! Directory || !entry.path.endsWith('.app')) continue;
         final base = entry.uri.pathSegments.last;
-        final name = base.endsWith('.app')
-            ? base.substring(0, base.length - 4)
-            : base;
+        final name =
+            base.endsWith('.app') ? base.substring(0, base.length - 4) : base;
         if (name.isEmpty) continue;
         found[base] = InstalledApp(id: base, name: name);
       }

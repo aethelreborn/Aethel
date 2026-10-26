@@ -438,7 +438,8 @@ class _PermissionsSectionState extends State<_PermissionsSection>
           children: [
             for (var index = 0; index < _entries.length; index++) ...[
               if (index > 0) Divider(height: 1, color: palette.line),
-              _PermissionRow(entry: _entries[index], onAct: () => _act(_entries[index])),
+              _PermissionRow(
+                  entry: _entries[index], onAct: () => _act(_entries[index])),
             ],
           ],
         ),
@@ -462,8 +463,7 @@ class _PermissionRow extends StatelessWidget {
           tone: PillTone.teal,
           icon: Icons.check_rounded,
         ),
-      PermissionStage.notNeeded =>
-        const StatusPill(label: 'Not needed'),
+      PermissionStage.notNeeded => const StatusPill(label: 'Not needed'),
       PermissionStage.blocked => TextButton(
           onPressed: onAct,
           child: const Text('Settings'),

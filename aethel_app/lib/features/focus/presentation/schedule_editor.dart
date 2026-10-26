@@ -357,8 +357,8 @@ class _AppsField extends StatelessWidget {
                       ),
                       child: Text(
                         name,
-                        style: textTheme.labelSmall
-                            ?.copyWith(color: palette.ink),
+                        style:
+                            textTheme.labelSmall?.copyWith(color: palette.ink),
                       ),
                     ),
                 ],

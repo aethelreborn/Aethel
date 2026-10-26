@@ -12,6 +12,10 @@ export class SyncGateway {
   private wss: WebSocketServer;
   // Map<userId, Set<ConnectedClient>> — supports multi-device fan-out
   private clients: Map<string, Set<ConnectedClient>> = new Map();
+  // Per-IP connection timestamps for a basic connection throttle.
+  private recentConnections: Map<string, number[]> = new Map();
+  private readonly connectionLimit = 10;
+  private readonly connectionWindowMs = 60 * 1000;
 
   /**
    * Attach to an existing HTTP server at path `/ws` (production: one port
@@ -23,8 +27,21 @@ export class SyncGateway {
         ? new WebSocketServer({ port: target })
         : new WebSocketServer({ server: target, path: '/ws' });
 
-    this.wss.on('connection', (incomingWs, req) => {
+    this.wss.on('connection', async (incomingWs, req) => {
       const ws = incomingWs as ConnectedClient;
+
+      // Basic per-IP connection throttle to discourage WS connection spam.
+      const ip = req.socket?.remoteAddress ?? 'unknown';
+      const now = Date.now();
+      const times = (this.recentConnections.get(ip) ?? []).filter(
+        (t) => now - t < this.connectionWindowMs,
+      );
+      if (times.length >= this.connectionLimit) {
+        incomingWs.close(1008, 'Too many connections');
+        return;
+      }
+      times.push(now);
+      this.recentConnections.set(ip, times);
 
       // Extract token from URL query param (?token=<JWT>)
       const url = req.url ?? '';
@@ -37,17 +54,51 @@ export class SyncGateway {
         return;
       }
 
+      let payload: { userId: string; tokenVersion?: number };
       try {
-        const payload = jwt.verify(token, env.JWT_SECRET) as { userId: string };
-        ws.userId = payload.userId;
+        payload = jwt.verify(token, env.JWT_SECRET) as {
+          userId: string;
+          tokenVersion?: number;
+        };
+      } catch {
+        // Invalid/expired token — close immediately
+        incomingWs.close(1008, 'Invalid or expired token');
+        return;
+      }
 
-        // Add to set (create set if first device for this user)
-        let userSet = this.clients.get(payload.userId);
-        if (!userSet) {
-          userSet = new Set<ConnectedClient>();
-          this.clients.set(payload.userId, userSet);
-        }
-        userSet.add(ws);
+      // Reject revoked/stale tokens by checking tokenVersion against the DB,
+      // mirroring auth.middleware.ts so logout/password change kills WS too.
+      let userTokenVersion: number | null = null;
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: payload.userId },
+          select: { tokenVersion: true },
+        });
+        userTokenVersion = user ? user.tokenVersion : null;
+      } catch {
+        // Cannot verify authorization — refuse the connection.
+        incomingWs.close(1011, 'Authentication verification failed');
+        return;
+      }
+
+      if (
+        !userTokenVersion ||
+        typeof payload.tokenVersion !== 'number' ||
+        payload.tokenVersion !== userTokenVersion
+      ) {
+        incomingWs.close(1008, 'Session invalidated — sign in again');
+        return;
+      }
+
+      ws.userId = payload.userId;
+
+      // Add to set (create set if first device for this user)
+      let userSet = this.clients.get(payload.userId);
+      if (!userSet) {
+        userSet = new Set<ConnectedClient>();
+        this.clients.set(payload.userId, userSet);
+      }
+      userSet.add(ws);
 
         console.log(`[WS] User ${payload.userId} connected`);
 

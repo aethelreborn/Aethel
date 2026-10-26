@@ -1,11 +1,9 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import jwt from 'jsonwebtoken';
 import { AuthService } from './auth.service.js';
 import { validateBody } from '../../middleware/validate.middleware.js';
 import { authLimiter } from '../../middleware/rateLimiter.middleware.js';
 import { authMiddleware, AuthRequest } from '../../middleware/auth.middleware.js';
-import { env } from '../../config/env.js';
 
 const router = Router();
 const authService = new AuthService();
@@ -79,18 +77,13 @@ router.delete('/account', authMiddleware, async (req: AuthRequest, res) => {
   }
 });
 
-router.post('/logout', async (req, res) => {
+router.post('/logout', authLimiter, authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (authHeader?.startsWith('Bearer ')) {
-      const token = authHeader.slice(7);
-      const payload = jwt.verify(token, env.JWT_SECRET) as { userId: string };
-      await authService.logout(payload.userId);
-    }
-    res.json({ message: 'Logged out' });
+    await authService.logout(req.userId as string);
   } catch {
-    res.json({ message: 'Logged out' });
+    // Best effort — token version bump already invalidates sessions.
   }
+  res.json({ message: 'Logged out' });
 });
 
 export default router;

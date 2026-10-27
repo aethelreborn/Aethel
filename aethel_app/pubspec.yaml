@@ -1,7 +1,7 @@
 name: aethel
 description: A private vault, bill ledger, and focus timer that keeps your data on your device.
 publish_to: 'none'
-version: 1.1.0+3
+version: 1.2.0+4
 
 environment:
   sdk: '>=3.2.0 <4.0.0'

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="aethel_accessibility_description">Lets Aethel notice which app opens during a focus session so it can raise the block wall immediately. Aethel does not read your typing or screen contents.</string>
+</resources>

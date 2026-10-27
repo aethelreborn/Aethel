@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -54,6 +55,8 @@ class FocusController extends StateNotifier<FocusState> {
     _restore();
   }
 
+  bool get _isAndroid => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
   final LocalStore _local = LocalStore.instance;
   Timer? _ticker;
 
@@ -107,6 +110,19 @@ class FocusController extends StateNotifier<FocusState> {
       state = state.copyWith(blockError: null);
       return;
     }
+    if (_isAndroid) {
+      final overlay = await DeviceServices.instance.hasOverlayPermission();
+      final a11y = await DeviceServices.instance.hasAccessibilityBlocker();
+      if (!overlay && !a11y) {
+        state = state.copyWith(
+          blockError:
+              'Hard blocking needs "Display over other apps". Open Settings → '
+              'Apps → Aethel → Display over other apps, then resume this session.',
+        );
+        unawaited(DeviceServices.instance.requestOverlayPermission());
+        return;
+      }
+    }
     final ok = await DeviceServices.instance.startBlock(
       names: run.blockedApps,
       until: run.endsAt,
@@ -115,17 +131,23 @@ class FocusController extends StateNotifier<FocusState> {
       state = state.copyWith(blockError: null);
       return;
     }
-    final usage = await DeviceServices.instance.hasUsageAccess();
-    state = state.copyWith(
-      blockError: usage
-          ? 'App blocking could not start. The blocked apps may not be '
-              'installed, or the block service was refused.'
-          : 'App blocking needs usage access. Open Settings → Special access '
-              '→ Usage access and allow Aethel, then resume this session.',
-    );
-    if (!usage) {
-      unawaited(DeviceServices.instance.requestUsageAccess());
+    if (_isAndroid) {
+      final usage = await DeviceServices.instance.hasUsageAccess();
+      state = state.copyWith(
+        blockError: usage
+            ? 'App blocking could not start. The blocked apps may not be '
+                'installed, or the block service was refused.'
+            : 'App blocking needs usage access. Open Settings → Special access '
+                '→ Usage access and allow Aethel, then resume this session.',
+      );
+      if (!usage) {
+        unawaited(DeviceServices.instance.requestUsageAccess());
+      }
+      return;
     }
+    state = state.copyWith(
+      blockError: 'App blocking could not start on this device.',
+    );
   }
 
   void _clearBlock() {

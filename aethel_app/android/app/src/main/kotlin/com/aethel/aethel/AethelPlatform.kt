@@ -15,6 +15,7 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
+import java.util.LinkedHashMap
 
 /**
  * Flutter <-> Android bridge for the things Dart cannot reach on its own:
@@ -47,8 +48,30 @@ class AethelPlatform(
                 }
                 result.success(true)
             }
+            "hasOverlayPermission" -> result.success(Settings.canDrawOverlays(context))
+            "requestOverlayPermission" -> {
+                runCatching {
+                    context.startActivity(
+                        Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:${context.packageName}"),
+                        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    )
+                }
+                result.success(true)
+            }
+            "hasAccessibilityBlocker" -> result.success(hasAccessibilityBlocker())
             "openNotificationSettings" -> {
                 runCatching { openNotificationSettings() }
+                result.success(true)
+            }
+            "openAccessibilitySettings" -> {
+                runCatching {
+                    context.startActivity(
+                        Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    )
+                }
                 result.success(true)
             }
             "listApps" -> result.success(listApps())
@@ -114,6 +137,15 @@ class AethelPlatform(
             )
         }
         return mode == AppOpsManager.MODE_ALLOWED
+    }
+
+    private fun hasAccessibilityBlocker(): Boolean {
+        val expected = "${context.packageName}/${AethelAccessibilityService::class.java.name}"
+        val enabled = Settings.Secure.getString(
+            context.contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+        ) ?: return false
+        return enabled.split(':').any { it.equals(expected, ignoreCase = true) }
     }
 
     private fun openNotificationSettings() {

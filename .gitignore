@@ -48,3 +48,4 @@ figma-assets/
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 graft/.cache/
 graft/.graph/
+.opencode-local/

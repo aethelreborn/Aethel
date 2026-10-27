@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'desktop_blocker.dart';
+
 /// A launchable application installed on this device.
 class InstalledApp {
   const InstalledApp({required this.id, required this.name});
@@ -29,18 +31,24 @@ class DeviceCapabilities {
     required this.appBlocking,
     required this.usageAccess,
     required this.installApk,
+    this.overlayPermission = false,
+    this.accessibilityBlocker = false,
   });
 
   final bool appList;
   final bool appBlocking;
   final bool usageAccess;
   final bool installApk;
+  final bool overlayPermission;
+  final bool accessibilityBlocker;
 
   static const desktopUnsupported = DeviceCapabilities(
     appList: true,
-    appBlocking: false,
+    appBlocking: true,
     usageAccess: false,
     installApk: false,
+    overlayPermission: false,
+    accessibilityBlocker: false,
   );
 
   static const web = DeviceCapabilities(
@@ -48,6 +56,8 @@ class DeviceCapabilities {
     appBlocking: false,
     usageAccess: false,
     installApk: false,
+    overlayPermission: false,
+    accessibilityBlocker: false,
   );
 }
 
@@ -82,23 +92,47 @@ class DeviceServices {
     if (kIsWeb) return DeviceCapabilities.web;
     if (_isAndroid) {
       final usage = await _invoke<bool>('hasUsageAccess') ?? false;
+      final overlay = await _invoke<bool>('hasOverlayPermission') ?? false;
+      final a11y = await _invoke<bool>('hasAccessibilityBlocker') ?? false;
       return DeviceCapabilities(
         appList: true,
         appBlocking: true,
         usageAccess: usage,
         installApk: true,
+        overlayPermission: overlay,
+        accessibilityBlocker: a11y,
       );
     }
     return DeviceCapabilities.desktopUnsupported;
   }
 
-  /// Android's usage-access grant is a system settings toggle, so it can only
-  /// be checked, never requested from inside the app.
+  /// Android's "Display over other apps" grant. Without it the block wall
+  /// falls back to launching an activity, which Android may refuse while
+  /// another app is in the foreground.
+  Future<bool> hasOverlayPermission() async {
+    if (!_isAndroid) return true;
+    return await _invoke<bool>('hasOverlayPermission') ?? false;
+  }
+
+  Future<void> requestOverlayPermission() async {
+    if (!_isAndroid) return;
+    await _invoke<bool>('requestOverlayPermission');
+  }
+
+  Future<bool> hasAccessibilityBlocker() async {
+    if (!_isAndroid) return false;
+    return await _invoke<bool>('hasAccessibilityBlocker') ?? false;
+  }
+
+  Future<void> requestAccessibilityBlocker() async {
+    if (!_isAndroid) return;
+    await _invoke<bool>('openAccessibilitySettings');
+  }
+
   Future<bool> hasUsageAccess() async {
     if (!_isAndroid) return false;
     return await _invoke<bool>('hasUsageAccess') ?? false;
   }
-
   Future<void> requestUsageAccess() async {
     if (!_isAndroid) return;
     await _invoke<bool>('requestUsageAccess');
@@ -141,17 +175,28 @@ class DeviceServices {
     required List<String> names,
     required DateTime until,
   }) async {
-    if (!_isAndroid || names.isEmpty) return false;
-    final ok = await _invoke<bool>('startBlock', <String, dynamic>{
-      'names': names,
-      'untilMs': until.millisecondsSinceEpoch,
-    });
-    return ok ?? false;
+    if (names.isEmpty || until.isBefore(DateTime.now())) return false;
+    if (_isAndroid) {
+      final ok = await _invoke<bool>('startBlock', <String, dynamic>{
+        'names': names,
+        'untilMs': until.millisecondsSinceEpoch,
+      });
+      return ok ?? false;
+    }
+    if (_isDesktop) {
+      return DesktopBlocker.start(names: names, until: until);
+    }
+    return false;
   }
 
   Future<void> stopBlock() async {
-    if (!_isAndroid) return;
-    await _invoke<bool>('stopBlock');
+    if (_isAndroid) {
+      await _invoke<bool>('stopBlock');
+      return;
+    }
+    if (_isDesktop) {
+      DesktopBlocker.stop();
+    }
   }
 
   Future<List<InstalledApp>> _desktopApps() async {

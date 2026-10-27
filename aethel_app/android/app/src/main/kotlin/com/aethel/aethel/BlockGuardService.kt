@@ -44,6 +44,7 @@ class BlockGuardService : Service() {
     private var blocked = emptySet<String>()
     private var lastBlockShownAt = 0L
     private var seededForeground = false
+    private var overlay: BlockOverlay? = null
 
     private val poller = object : Runnable {
         override fun run() {
@@ -58,21 +59,23 @@ class BlockGuardService : Service() {
             val foreground = currentForegroundPackage(windowMs)
             if (foreground != null) {
                 seededForeground = true
-                if (foreground in blocked) {
-                    val now = System.currentTimeMillis()
-                    // Re-check membership every tick, not only on change:
-                    // after dismissing BlockActivity and returning to the
-                    // blocked app, foreground is still that app and an
-                    // equality-only check would never re-block. The cooldown
-                    // stops a relaunch loop while the block screen is up
-                    // (own package is skipped, so foreground can go null).
-                    if (now - lastBlockShownAt >= RELAUNCH_COOLDOWN_MS) {
-                        lastBlockShownAt = now
-                        showBlockScreen(foreground)
-                    }
-                }
+                considerBlock(foreground)
             }
             handler.postDelayed(this, POLL_INTERVAL_MS)
+        }
+    }
+
+    /** Shared by the usage-stats poller and the accessibility fast path. */
+    private fun considerBlock(foreground: String) {
+        if (foreground !in blocked) return
+        val now = System.currentTimeMillis()
+        // Re-check membership every time, not only on change: after leaving
+        // the wall the foreground is still the blocked app and an
+        // equality-only check would never re-block. The cooldown stops a
+        // relaunch loop while the wall is already up.
+        if (now - lastBlockShownAt >= RELAUNCH_COOLDOWN_MS) {
+            lastBlockShownAt = now
+            showBlockScreen(foreground)
         }
     }
 
@@ -95,12 +98,25 @@ class BlockGuardService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        overlay?.hide()
+        overlay = BlockOverlay(this, until)
+        // Accessibility events fire the moment a window changes, so the wall
+        // can rise before the usage-stats poll would have noticed.
+        BlockEvents.listener = { packageName ->
+            handler.post {
+                seededForeground = true
+                considerBlock(packageName)
+            }
+        }
         handler.post(poller)
         return START_STICKY
     }
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
+        BlockEvents.listener = null
+        overlay?.hide()
+        overlay = null
         super.onDestroy()
     }
 
@@ -133,12 +149,18 @@ class BlockGuardService : Service() {
     }
 
     private fun showBlockScreen(blockedPackage: String?) {
+        // Overlay first: WindowManager.addView is not subject to
+        // background-activity-start rules, so it works while the blocked app
+        // is foreground. The activity path is a fallback for when overlay
+        // permission is missing (and BAL is exempted by an enabled
+        // accessibility service).
+        if (overlay?.show(blockedPackage) == true) return
         val intent = Intent(this, BlockActivity::class.java).apply {
             putExtra(BlockActivity.EXTRA_UNTIL, until)
             putExtra(BlockActivity.EXTRA_PACKAGE, blockedPackage)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
-        startActivity(intent)
+        runCatching { startActivity(intent) }
     }
 
     private fun createChannel() {

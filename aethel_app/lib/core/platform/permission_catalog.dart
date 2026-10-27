@@ -58,13 +58,36 @@ class PermissionCatalog {
 
     final capabilities = await DeviceServices.instance.capabilities();
     if (capabilities.appBlocking) {
-      final granted = await DeviceServices.instance.hasUsageAccess();
-      entries.add(PermissionEntry(
-        key: 'blocking',
-        title: 'App access',
-        detail: 'See which app is open so Focus mode can hold the block.',
-        stage: granted ? PermissionStage.granted : PermissionStage.prompt,
-      ));
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        final usage = await DeviceServices.instance.hasUsageAccess();
+        entries.add(PermissionEntry(
+          key: 'blocking',
+          title: 'App access',
+          detail: 'See which app is open so Focus mode can hold the block.',
+          stage: usage ? PermissionStage.granted : PermissionStage.prompt,
+        ));
+        final overlay = await DeviceServices.instance.hasOverlayPermission();
+        entries.add(PermissionEntry(
+          key: 'overlay',
+          title: 'Display over other apps',
+          detail: 'Draw the block wall over a blocked app immediately.',
+          stage: overlay ? PermissionStage.granted : PermissionStage.prompt,
+        ));
+        final a11y = await DeviceServices.instance.hasAccessibilityBlocker();
+        entries.add(PermissionEntry(
+          key: 'accessibility',
+          title: 'Accessibility (fast block)',
+          detail: 'Lets the wall rise the instant a blocked app opens.',
+          stage: a11y ? PermissionStage.granted : PermissionStage.prompt,
+        ));
+      } else {
+        entries.add(const PermissionEntry(
+          key: 'blocking',
+          title: 'App blocking',
+          detail: 'Force-closes blocked apps while the session runs.',
+          stage: PermissionStage.granted,
+        ));
+      }
     }
 
     return entries;
@@ -96,6 +119,10 @@ class PermissionCatalog {
     }
     if (entry.key == 'blocking') {
       await DeviceServices.instance.requestUsageAccess();
+    } else if (entry.key == 'overlay') {
+      await DeviceServices.instance.requestOverlayPermission();
+    } else if (entry.key == 'accessibility') {
+      await DeviceServices.instance.requestAccessibilityBlocker();
     }
     return load();
   }
@@ -107,6 +134,10 @@ class PermissionCatalog {
       await DeviceServices.instance.openNotificationSettings();
     } else if (key == 'blocking') {
       await DeviceServices.instance.requestUsageAccess();
+    } else if (key == 'overlay') {
+      await DeviceServices.instance.requestOverlayPermission();
+    } else if (key == 'accessibility') {
+      await DeviceServices.instance.requestAccessibilityBlocker();
     }
   }
 }

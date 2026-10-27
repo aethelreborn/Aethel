@@ -55,7 +55,8 @@ class FocusController extends StateNotifier<FocusState> {
     _restore();
   }
 
-  bool get _isAndroid => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  bool get _isAndroid =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
   final LocalStore _local = LocalStore.instance;
   Timer? _ticker;

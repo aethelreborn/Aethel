@@ -133,6 +133,7 @@ class DeviceServices {
     if (!_isAndroid) return false;
     return await _invoke<bool>('hasUsageAccess') ?? false;
   }
+
   Future<void> requestUsageAccess() async {
     if (!_isAndroid) return;
     await _invoke<bool>('requestUsageAccess');

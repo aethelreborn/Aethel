@@ -292,7 +292,9 @@ class DesktopBlocker {
       case TargetPlatform.windows:
         final image = process.image;
         if (image == null) return;
-        if (image.contains('/') || image.contains(r'\') || image.contains('"')) {
+        if (image.contains('/') ||
+            image.contains(r'\') ||
+            image.contains('"')) {
           return;
         }
         await Process.run(
@@ -345,10 +347,8 @@ class DesktopBlocker {
     return beforeOk && afterOk;
   }
 
-  static String _normalizeName(String name) => name
-      .trim()
-      .toLowerCase()
-      .replaceAll(RegExp(r'\s+'), ' ');
+  static String _normalizeName(String name) =>
+      name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 
   static bool _isSelf(_ProcessEntry process) {
     final self = Platform.resolvedExecutable.split(RegExp(r'[/\\]')).last;

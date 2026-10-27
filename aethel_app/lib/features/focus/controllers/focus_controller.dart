@@ -13,11 +13,17 @@ class FocusState {
     this.run,
     this.remainingSeconds = 0,
     this.completedSession,
+    this.blockError,
   });
 
   final FocusRun? run;
   final int remainingSeconds;
   final FocusSession? completedSession;
+
+  /// Non-null when the platform block for this run failed to start (missing
+  /// usage access, unresolvable packages, …). The timer keeps running; only
+  /// app interception is down.
+  final String? blockError;
 
   bool get isRunning => run != null && !run!.paused;
   bool get isPaused => run?.paused ?? false;
@@ -26,6 +32,7 @@ class FocusState {
     Object? run = _unset,
     int? remainingSeconds,
     Object? completedSession = _unset,
+    Object? blockError = _unset,
   }) {
     return FocusState(
       run: identical(run, _unset) ? this.run : run as FocusRun?,
@@ -33,6 +40,9 @@ class FocusState {
       completedSession: identical(completedSession, _unset)
           ? this.completedSession
           : completedSession as FocusSession?,
+      blockError: identical(blockError, _unset)
+          ? this.blockError
+          : blockError as String?,
     );
   }
 }
@@ -59,7 +69,7 @@ class FocusController extends StateNotifier<FocusState> {
     state = FocusState(run: run, remainingSeconds: remaining);
     if (!run.paused) {
       _startTicker();
-      _applyBlock(run);
+      unawaited(_applyBlock(run));
     }
   }
 
@@ -80,17 +90,42 @@ class FocusController extends StateNotifier<FocusState> {
     await _local.save();
     state = FocusState(run: run, remainingSeconds: minutes * 60);
     _startTicker();
-    _applyBlock(run);
+    await _applyBlock(run);
   }
 
-  /// Starts the platform block screen for this run. Fails quietly on platforms
-  /// without a blocker — the timer still works, it just cannot intercept apps.
-  void _applyBlock(FocusRun run) {
-    if (run.blockedApps.isEmpty || run.paused) return;
-    unawaited(DeviceServices.instance.startBlock(
+  /// Starts the platform block screen for this run. On platforms without a
+  /// blocker this is a no-op (the timer still works). On Android a failure
+  /// is surfaced in [FocusState.blockError] so the UI can say so instead of
+  /// silently letting the user open YouTube mid-session.
+  Future<void> _applyBlock(FocusRun run) async {
+    if (run.blockedApps.isEmpty || run.paused) {
+      state = state.copyWith(blockError: null);
+      return;
+    }
+    final caps = await DeviceServices.instance.capabilities();
+    if (!caps.appBlocking) {
+      state = state.copyWith(blockError: null);
+      return;
+    }
+    final ok = await DeviceServices.instance.startBlock(
       names: run.blockedApps,
       until: run.endsAt,
-    ));
+    );
+    if (ok) {
+      state = state.copyWith(blockError: null);
+      return;
+    }
+    final usage = await DeviceServices.instance.hasUsageAccess();
+    state = state.copyWith(
+      blockError: usage
+          ? 'App blocking could not start. The blocked apps may not be '
+              'installed, or the block service was refused.'
+          : 'App blocking needs usage access. Open Settings → Special access '
+              '→ Usage access and allow Aethel, then resume this session.',
+    );
+    if (!usage) {
+      unawaited(DeviceServices.instance.requestUsageAccess());
+    }
   }
 
   void _clearBlock() {
@@ -108,6 +143,7 @@ class FocusController extends StateNotifier<FocusState> {
     state = state.copyWith(
       run: paused,
       remainingSeconds: paused.pausedRemainingSeconds,
+      blockError: null,
     );
   }
 
@@ -122,7 +158,7 @@ class FocusController extends StateNotifier<FocusState> {
       remainingSeconds: resumed.remainingSeconds(DateTime.now()),
     );
     _startTicker();
-    _applyBlock(resumed);
+    await _applyBlock(resumed);
   }
 
   Future<void> cancel() async {

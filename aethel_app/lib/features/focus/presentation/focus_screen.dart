@@ -40,7 +40,13 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
           minutes: _minutes,
           blockedApps: _blocked,
         );
-    if (mounted) setState(() => _starting = false);
+    if (mounted) {
+      setState(() => _starting = false);
+      final error = ref.read(focusControllerProvider).blockError;
+      if (error != null) {
+        showMessage(context, error, error: true);
+      }
+    }
   }
 
   Future<void> _pickApps() async {
@@ -106,7 +112,11 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
             ),
             const SizedBox(height: 16),
           ],
-          if (focus.run != null)
+          if (focus.run != null) ...[
+            if (focus.blockError != null) ...[
+              _BlockErrorBanner(message: focus.blockError!),
+              const SizedBox(height: 12),
+            ],
             _ActiveTimer(
               focus: focus,
               onPause: () => ref.read(focusControllerProvider.notifier).pause(),
@@ -114,7 +124,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                   ref.read(focusControllerProvider.notifier).resume(),
               onEnd: _end,
             )
-          else
+          ] else
             PaperCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,6 +318,43 @@ class _BlockAppsRow extends StatelessWidget {
             Icon(Icons.chevron_right_rounded, size: 20, color: palette.muted),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _BlockErrorBanner extends StatelessWidget {
+  const _BlockErrorBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.aethel;
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: palette.danger.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: palette.danger.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.warning_amber_rounded, size: 18, color: palette.danger),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: textTheme.bodySmall?.copyWith(
+                color: palette.ink,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

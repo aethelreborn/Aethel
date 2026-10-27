@@ -29,6 +29,10 @@ class BlockGuardService : Service() {
         const val EXTRA_PACKAGES = "packages"
         const val CHANNEL_ID = "aethel_block_guard"
         const val NOTIFICATION_ID = 4711
+        private const val POLL_INTERVAL_MS = 700L
+        private const val SEED_WINDOW_MS = 60_000L
+        private const val TRACK_WINDOW_MS = 5_000L
+        private const val RELAUNCH_COOLDOWN_MS = 2_000L
 
         fun stop(context: Context) {
             context.stopService(Intent(context, BlockGuardService::class.java))
@@ -38,7 +42,8 @@ class BlockGuardService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private var until = 0L
     private var blocked = emptySet<String>()
-    private var lastForeground: String? = null
+    private var lastBlockShownAt = 0L
+    private var seededForeground = false
 
     private val poller = object : Runnable {
         override fun run() {
@@ -46,14 +51,28 @@ class BlockGuardService : Service() {
                 stopSelf()
                 return
             }
-            val foreground = currentForegroundPackage()
-            if (foreground != null && foreground != lastForeground) {
-                lastForeground = foreground
+            // First poll looks back far enough to catch an app that was
+            // already foreground when the session started. Later polls only
+            // need the recent window because we re-check every tick.
+            val windowMs = if (seededForeground) TRACK_WINDOW_MS else SEED_WINDOW_MS
+            val foreground = currentForegroundPackage(windowMs)
+            if (foreground != null) {
+                seededForeground = true
                 if (foreground in blocked) {
-                    showBlockScreen(foreground)
+                    val now = System.currentTimeMillis()
+                    // Re-check membership every tick, not only on change:
+                    // after dismissing BlockActivity and returning to the
+                    // blocked app, foreground is still that app and an
+                    // equality-only check would never re-block. The cooldown
+                    // stops a relaunch loop while the block screen is up
+                    // (own package is skipped, so foreground can go null).
+                    if (now - lastBlockShownAt >= RELAUNCH_COOLDOWN_MS) {
+                        lastBlockShownAt = now
+                        showBlockScreen(foreground)
+                    }
                 }
             }
-            handler.postDelayed(this, 700)
+            handler.postDelayed(this, POLL_INTERVAL_MS)
         }
     }
 
@@ -85,11 +104,11 @@ class BlockGuardService : Service() {
         super.onDestroy()
     }
 
-    private fun currentForegroundPackage(): String? {
+    private fun currentForegroundPackage(windowMs: Long = TRACK_WINDOW_MS): String? {
         val usageStats =
             getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager ?: return null
         val now = System.currentTimeMillis()
-        val events = usageStats.queryEvents(now - 5000, now)
+        val events = usageStats.queryEvents(now - windowMs, now)
         val event = UsageEvents.Event()
         var latest = 0L
         var packageName: String? = null
@@ -103,9 +122,12 @@ class BlockGuardService : Service() {
             }
             if (!isResume) continue
             if (event.timeStamp < latest) continue
-            if (event.packageName == this.packageName) continue
             latest = event.timeStamp
-            packageName = event.packageName
+            // Own-package resume (Aethel or BlockActivity) means the user is
+            // inside us, not in a blocked app — store null so a stale third-
+            // party resume older than this one is not mistaken for foreground.
+            packageName =
+                if (event.packageName == this.packageName) null else event.packageName
         }
         return packageName
     }

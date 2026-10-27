@@ -58,6 +58,11 @@ class AethelPlatform(
                 if (untilMs <= System.currentTimeMillis() || names.isEmpty()) {
                     BlockGuardService.stop(context)
                     result.success(false)
+                } else if (!hasUsageAccess()) {
+                    // queryEvents is empty without this grant, so the poller
+                    // would run forever and never lift the block screen.
+                    BlockGuardService.stop(context)
+                    result.success(false)
                 } else {
                     val packages = resolvePackages(names)
                     if (packages.isEmpty()) {

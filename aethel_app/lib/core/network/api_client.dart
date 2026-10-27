@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../config/app_config.dart';
 import '../storage/secure_store.dart';
@@ -201,7 +202,14 @@ class ApiClient {
           message = 'The vault server took too long to answer.';
           break;
         case DioExceptionType.connectionError:
-          message = 'The vault server cannot be reached.';
+          // On the web a blocked CORS preflight also surfaces as a connection
+          // error with a null response — the real cause is the browser
+          // rejecting this page's origin, not a dead host.
+          message = kIsWeb
+              ? 'The vault server cannot be reached from this page. '
+                  'If the address is correct, the server may be rejecting '
+                  'this site\'s origin, or it may still be waking up.'
+              : 'The vault server cannot be reached.';
           break;
         case DioExceptionType.badResponse:
           message = status == 401

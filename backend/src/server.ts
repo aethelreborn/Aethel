@@ -16,23 +16,15 @@ const app = express();
 
 app.use(helmet());
 
-const configuredOrigins = new Set(
-  [env.FRONTEND_URL, ...(env.CORS_ORIGINS ?? '').split(',')]
-    .map((origin) => origin.trim())
-    .filter(Boolean),
-);
-
+// Auth is Bearer-token only (Authorization header; no cookies), so CORS is a
+// browser *read* gate, not an ambient-credential boundary. Reflect any
+// browser origin instead of a single FRONTEND_URL — that allowlist broke
+// every time a dashboard mirror was added (Vercel, Cloudflare dpdns, local).
+// credentials stays false so a reflected origin can never carry cookies.
+// Native clients send no Origin header and are always allowed.
 app.use(cors({
-  origin(origin, callback) {
-    // Native clients do not send an Origin header. In development every origin
-    // is permitted so Flutter web can run on any local port.
-    if (!origin || env.NODE_ENV !== 'production' || configuredOrigins.has(origin)) {
-      callback(null, true);
-      return;
-    }
-    callback(new Error('Origin not allowed'));
-  },
-  credentials: true,
+  origin: true,
+  credentials: false,
 }));
 
 app.use(express.json({ limit: '256kb' }));

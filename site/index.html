@@ -292,6 +292,200 @@
     font-weight: 600;
   }
 
+  /* ── Hologram podium ─────────────────────────────────────── */
+  .holo-section {
+    padding: 96px 0 88px;
+    position: relative;
+    overflow: hidden;
+  }
+  .holo-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(60% 40% at 50% 60%, var(--teal-soft) 0%, transparent 70%),
+      repeating-linear-gradient(to bottom, transparent 0, transparent 3px, var(--line-soft) 3px, var(--line-soft) 4px);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .holo-stage {
+    position: relative;
+    max-width: 920px;
+    margin: 0 auto;
+    perspective: 1400px;
+    display: grid;
+    place-items: center;
+    min-height: 460px;
+  }
+  .podium {
+    position: absolute;
+    bottom: 0;
+    width: 340px;
+    height: 26px;
+    background:
+      linear-gradient(to bottom, var(--surface) 0%, var(--ground) 100%);
+    border: 1px solid var(--line);
+    border-radius: 6px 6px 14px 14px;
+    box-shadow:
+      0 24px 40px rgba(28, 36, 34, 0.18),
+      inset 0 1px 0 var(--surface);
+    transform: rotateX(58deg) translateZ(0);
+    transform-style: preserve-3d;
+  }
+  .podium::after {
+    content: '';
+    position: absolute;
+    inset: -18px -40px auto -40px;
+    height: 18px;
+    background: radial-gradient(ellipse at center, color-mix(in srgb, var(--teal) 35%, transparent) 0%, transparent 70%);
+    filter: blur(12px);
+    opacity: 0.7;
+  }
+  .holo {
+    position: relative;
+    width: min(520px, 86vw);
+    aspect-ratio: 4 / 3;
+    transform-style: preserve-3d;
+    transform: rotateX(8deg) rotateY(-6deg);
+    animation: holo-float 6s ease-in-out infinite;
+    z-index: 2;
+  }
+  @keyframes holo-float {
+    0%, 100% { transform: rotateX(8deg) rotateY(-6deg) translateY(0); }
+    50% { transform: rotateX(6deg) rotateY(4deg) translateY(-14px); }
+  }
+  .holo-plate {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--teal) 18%, transparent) 0%, color-mix(in srgb, var(--brass) 14%, transparent) 100%),
+      color-mix(in srgb, var(--surface) 70%, transparent);
+    border: 1px solid color-mix(in srgb, var(--teal) 45%, var(--line));
+    border-radius: 18px;
+    backdrop-filter: blur(2px);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--brass) 30%, transparent) inset,
+      0 30px 60px color-mix(in srgb, var(--teal) 25%, transparent),
+      0 0 80px color-mix(in srgb, var(--teal) 18%, transparent);
+    overflow: hidden;
+  }
+  .holo-plate::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(to bottom, transparent 0, transparent 2px, color-mix(in srgb, var(--teal) 14%, transparent) 2px, color-mix(in srgb, var(--teal) 14%, transparent) 3px);
+    mix-blend-mode: screen;
+    opacity: 0.6;
+    animation: scan 3.2s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes scan {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+  .holo-plate::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, color-mix(in srgb, #fff 35%, transparent) 50%, transparent 70%);
+    opacity: 0.25;
+    animation: sheen 5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes sheen {
+    0%, 100% { transform: translateX(-100%); }
+    50% { transform: translateX(100%); }
+  }
+  .holo-text {
+    position: relative;
+    z-index: 2;
+    padding: 34px 36px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .holo-kicker {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2.6px;
+    color: var(--brass-ink);
+    text-transform: uppercase;
+  }
+  .holo-title {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(26px, 3.4vw, 38px);
+    line-height: 1.05;
+    letter-spacing: -0.8px;
+    color: var(--ink);
+    text-shadow: 0 0 18px color-mix(in srgb, var(--teal) 30%, transparent);
+  }
+  .holo-body {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--muted);
+    max-width: 44ch;
+  }
+  .holo-body strong { color: var(--ink); font-weight: 600; }
+  .holo-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--muted);
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+  .holo-meta span::before {
+    content: '◆';
+    color: var(--brass);
+    margin-right: 6px;
+    font-size: 9px;
+  }
+  .holo-dots {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    display: flex;
+    gap: 6px;
+    z-index: 3;
+  }
+  .holo-dots button {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: 0;
+    background: var(--line);
+    cursor: pointer;
+    padding: 0;
+    transition: background 160ms ease, transform 160ms ease;
+  }
+  .holo-dots button[aria-selected="true"] {
+    background: var(--teal);
+    transform: scale(1.35);
+  }
+  .holo-caption {
+    text-align: center;
+    margin-top: 52px;
+    font-size: 13.5px;
+    color: var(--muted);
+    letter-spacing: 0.2px;
+  }
+  .holo-caption strong { color: var(--ink); font-weight: 600; }
+  @media (prefers-reduced-motion: reduce) {
+    .holo { animation: none; }
+    .holo-plate::before, .holo-plate::after { animation: none; }
+  }
+  @media (max-width: 640px) {
+    .holo-stage { min-height: 380px; }
+    .podium { width: 240px; }
+    .holo-text { padding: 24px 22px; }
+  }
+
   /* ── Sections ───────────────────────────────────────────── */
   section { padding: 78px 0; }
   .section-head {
@@ -575,6 +769,43 @@
     </div>
   </div>
 
+  <!-- ── Hologram podium ───────────────────────────────────── -->
+  <section class="holo-section" id="hologram" aria-label="Aethel at a glance">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="big">A ledger, projected.</h2>
+        <p class="section-note">Hover, click the dots, or just watch. Every fact below is a real property of the build you can download.</p>
+      </div>
+      <div class="holo-stage">
+        <div class="holo" id="holo">
+          <div class="holo-plate">
+            <div class="holo-text">
+              <div>
+                <div class="holo-kicker" id="holo-kicker">Vault</div>
+                <h3 class="holo-title" id="holo-title">Sealed before it travels.</h3>
+              </div>
+              <p class="holo-body" id="holo-body">Passwords, cards, identities and notes. <strong>AES-256-GCM per entry</strong>, a fresh IV every save, keys derived on this device only.</p>
+              <div class="holo-meta" id="holo-meta">
+                <span>PBKDF2 · 210k rounds</span>
+                <span>Offline unlock</span>
+                <span>Zero-knowledge</span>
+              </div>
+            </div>
+            <div class="holo-dots" role="tablist" aria-label="Project facts">
+              <button type="button" data-i="0" aria-selected="true" aria-label="Vault"></button>
+              <button type="button" data-i="1" aria-selected="false" aria-label="Bills"></button>
+              <button type="button" data-i="2" aria-selected="false" aria-label="Focus"></button>
+              <button type="button" data-i="3" aria-selected="false" aria-label="Privacy"></button>
+              <button type="button" data-i="4" aria-selected="false" aria-label="Platforms"></button>
+            </div>
+          </div>
+        </div>
+        <div class="podium" aria-hidden="true"></div>
+      </div>
+      <p class="holo-caption"><strong>One key.</strong> Three habits. Six platforms. No account required to inspect the source.</p>
+    </div>
+  </section>
+
   <!-- ── Feature ledger ───────────────────────────────────── -->
   <section id="ledger">
     <div class="wrap">
@@ -730,5 +961,45 @@
   </div>
 </footer>
 
+<script>
+  (function () {
+    var facts = [
+      { kicker: 'Vault', title: 'Sealed before it travels.', body: 'Passwords, cards, identities and notes. <strong>AES-256-GCM per entry</strong>, a fresh IV every save, keys derived on this device only.', meta: ['PBKDF2 · 210k rounds', 'Offline unlock', 'Zero-knowledge'] },
+      { kicker: 'Bills', title: 'Due dates, never the details.', body: 'Subscriptions and utilities with real repeat rhythms. <strong>Names and amounts stay encrypted</strong>; only the due date travels in the clear so a reminder can find you.', meta: ['Daily → yearly', 'Encrypted JSON', 'One-press paid'] },
+      { kicker: 'Focus', title: 'One task, one timer.', body: 'Fifteen to sixty minutes, kept locally, restored across restarts. <strong>Weekly bars</strong> show the sessions you actually finished.', meta: ['Runs offline', 'Resumes across restarts', 'Hard app blocking'] },
+      { kicker: 'Privacy', title: 'The master password stays home.', body: 'Two keys fall out of the derivation. <strong>Only the verifier leaves</strong>; the vault key never does. There is no reset flow because there is nothing to reset to.', meta: ['PBKDF2-HMAC-SHA256', 'AES-256-GCM', 'Key wiped on lock'] },
+      { kicker: 'Platforms', title: 'Six builds, one source.', body: 'Linux, Windows, macOS, Android, iOS and Web. <strong>Every artifact comes from CI</strong> on the commit you can read.', meta: ['Open source', 'No account needed', 'Self-hostable'] }
+    ];
+    var kicker = document.getElementById('holo-kicker');
+    var title = document.getElementById('holo-title');
+    var body = document.getElementById('holo-body');
+    var meta = document.getElementById('holo-meta');
+    var dots = document.querySelectorAll('.holo-dots button');
+    var current = 0;
+    var timer = null;
+    function render(i) {
+      current = i;
+      var f = facts[i];
+      kicker.textContent = f.kicker;
+      title.textContent = f.title;
+      body.innerHTML = f.body;
+      meta.innerHTML = f.meta.map(function (m) { return '<span>' + m + '</span>'; }).join('');
+      dots.forEach(function (d, idx) { d.setAttribute('aria-selected', idx === i ? 'true' : 'false'); });
+    }
+    function advance() { render((current + 1) % facts.length); }
+    dots.forEach(function (d) {
+      d.addEventListener('click', function () {
+        render(parseInt(d.getAttribute('data-i'), 10));
+        if (timer) { clearInterval(timer); timer = setInterval(advance, 4800); }
+      });
+    });
+    timer = setInterval(advance, 4800);
+    var stage = document.querySelector('.holo-stage');
+    if (stage) {
+      stage.addEventListener('mouseenter', function () { if (timer) { clearInterval(timer); timer = null; } });
+      stage.addEventListener('mouseleave', function () { if (!timer) { timer = setInterval(advance, 4800); } });
+    }
+  })();
+</script>
 </body>
 </html>

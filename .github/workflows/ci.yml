@@ -34,6 +34,8 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
+      - name: Dependency audit
+        run: npm audit --omit=dev --audit-level=high
       - run: npx prisma generate
         env:
           DATABASE_URL: postgresql://aethel:aethel@localhost:5432/aethel

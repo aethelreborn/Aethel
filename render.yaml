@@ -18,9 +18,11 @@ services:
       - key: NODE_VERSION
         value: "22"
       - key: DATABASE_URL
-        fromDatabase:
-          name: aethel-db
-          property: externalConnectionString
+        # free Postgres lives in Oregon; the web service is in Singapore, so the
+        # internal connectionString doesn't resolve here. Paste the External URL
+        # from the database's Connections tab once in the dashboard; sync:false
+        # keeps Render from overwriting it back to the internal host on redeploys.
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET

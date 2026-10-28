@@ -1,4 +1,5 @@
 import { prisma } from '../../config/db.js';
+import { assertCanCreate } from '../payments/entitlement.js';
 
 export class SchedulesService {
   async findByUser(userId: string) {
@@ -6,6 +7,7 @@ export class SchedulesService {
   }
 
   async create(userId: string, data: any) {
+    await assertCanCreate(userId, 'schedules', () => prisma.studySchedule.count({ where: { userId } }));
     return prisma.studySchedule.create({
       data: {
         ...(data.id ? { id: data.id } : {}),

@@ -8,6 +8,8 @@ import '../../../app_providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/data_actions.dart';
 import '../../../data/models.dart';
+import '../../premium/premium_controller.dart';
+import '../../premium/upgrade_sheet.dart';
 import '../../../widgets/page.dart';
 import '../../../widgets/sheets.dart';
 
@@ -15,7 +17,16 @@ Future<BillItem?> showBillEditor(
   BuildContext context,
   WidgetRef ref, {
   BillItem? item,
-}) {
+}) async {
+  if (item == null &&
+      !canCreateWithState(
+        ref.read(premiumControllerProvider),
+        PremiumKind.billingItem,
+        ref.read(billItemsProvider).length,
+      )) {
+    await showUpgradeSheet(context);
+    return null;
+  }
   return showAethelSheet<BillItem>(
     context: context,
     builder: (sheetContext) => _BillEditorSheet(
@@ -124,6 +135,11 @@ class _BillEditorSheetState extends State<_BillEditorSheet> {
       final saved = await widget.actions.saveBill(bill);
       if (!mounted) return;
       Navigator.of(context).pop(saved);
+    } on FreeLimitExceededException catch (_) {
+      if (!mounted) return;
+      final navigator = Navigator.of(context);
+      navigator.pop();
+      await showUpgradeSheet(navigator.context);
     } catch (error) {
       if (!mounted) return;
       setState(() {

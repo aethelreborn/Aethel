@@ -1,5 +1,6 @@
 import { prisma } from '../../config/db.js';
 import { syncGateway } from '../../websocket/syncGateway.js';
+import { assertCanCreate } from '../payments/entitlement.js';
 
 export class VaultService {
   async findByUser(userId: string) {
@@ -11,6 +12,7 @@ export class VaultService {
   }
 
   async create(userId: string, data: any) {
+    await assertCanCreate(userId, 'vaultItems', () => prisma.vaultItem.count({ where: { userId } }));
     const item = await prisma.vaultItem.create({
       data: {
         ...(data.id ? { id: data.id } : {}),

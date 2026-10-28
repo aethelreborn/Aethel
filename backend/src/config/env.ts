@@ -15,6 +15,10 @@ const schema = z.object({
   FCM_PROJECT_ID: optionalText,
   FCM_CLIENT_EMAIL: optionalText,
   FCM_PRIVATE_KEY: optionalText,
+  AETHEL_PAY_GATEWAY_URL: z.string().url().default('http://127.0.0.1:6100'),
+  AETHEL_PAY_MERCHANT_ID: z.string().trim().min(1).default('00000000-0000-0000-0000-000000000001'),
+  AETHEL_PAY_MERCHANT_KEY: optionalText,
+  AETHEL_PAY_RETURN_URL: z.string().url().optional(),
 });
 
 export const env = schema.parse(process.env);

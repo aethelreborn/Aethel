@@ -2,8 +2,46 @@ import '../core/network/sync_service.dart';
 import '../core/storage/local_store.dart';
 import 'models.dart';
 
+/// The three capped resource kinds from the payments plan contract.
+enum PremiumKind { vaultItem, billingItem, schedule }
+
+/// Thrown when a create would exceed the free-plan cap while a definitive
+/// plan response says the account is free. UI maps this to the upgrade
+/// sheet instead of a raw error.
+class FreeLimitExceededException implements Exception {
+  const FreeLimitExceededException(this.kind);
+
+  final PremiumKind kind;
+
+  String get message => switch (kind) {
+        PremiumKind.vaultItem =>
+          'The free plan includes 15 vault entries. Upgrade to add more.',
+        PremiumKind.billingItem =>
+          'The free plan includes 5 bills. Upgrade to add more.',
+        PremiumKind.schedule =>
+          'The free plan includes 1 focus schedule. Upgrade to add more.',
+      };
+
+  @override
+  String toString() => message;
+}
+
+/// Returns false when the create must be blocked. Receives the kind and
+/// the current local count. Wired from the premium controller; null means
+/// no gating.
+typedef CreateCapGate = bool Function(PremiumKind kind, int currentCount);
+
 class DataActions {
+  DataActions({CreateCapGate? createGate}) : _createGate = createGate;
+
   final LocalStore _local = LocalStore.instance;
+  final CreateCapGate? _createGate;
+
+  void _requireCreateCap(PremiumKind kind, int currentCount) {
+    if (_createGate != null && !_createGate(kind, currentCount)) {
+      throw FreeLimitExceededException(kind);
+    }
+  }
 
   Future<VaultItem> saveVault(VaultItem item) async {
     final now = DateTime.now();
@@ -11,6 +49,7 @@ class DataActions {
     final snapshot = _local.snapshot;
     final index = snapshot.vault.indexWhere((entry) => entry.id == saved.id);
     if (index == -1) {
+      _requireCreateCap(PremiumKind.vaultItem, snapshot.vault.length);
       snapshot.vault.add(saved);
     } else {
       snapshot.vault[index] = saved;
@@ -36,6 +75,7 @@ class DataActions {
     final snapshot = _local.snapshot;
     final index = snapshot.bills.indexWhere((entry) => entry.id == saved.id);
     if (index == -1) {
+      _requireCreateCap(PremiumKind.billingItem, snapshot.bills.length);
       snapshot.bills.add(saved);
     } else {
       snapshot.bills[index] = saved;
@@ -75,6 +115,7 @@ class DataActions {
     final index =
         snapshot.schedules.indexWhere((entry) => entry.id == saved.id);
     if (index == -1) {
+      _requireCreateCap(PremiumKind.schedule, snapshot.schedules.length);
       snapshot.schedules.add(saved);
     } else {
       snapshot.schedules[index] = saved;

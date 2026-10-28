@@ -6,6 +6,8 @@ import '../../../app_providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/data_actions.dart';
 import '../../../data/models.dart';
+import '../../premium/premium_controller.dart';
+import '../../premium/upgrade_sheet.dart';
 import '../../../widgets/app_picker.dart';
 import '../../../widgets/page.dart';
 import '../../../widgets/sheets.dart';
@@ -14,7 +16,16 @@ Future<FocusSchedule?> showScheduleEditor(
   BuildContext context,
   WidgetRef ref, {
   FocusSchedule? item,
-}) {
+}) async {
+  if (item == null &&
+      !canCreateWithState(
+        ref.read(premiumControllerProvider),
+        PremiumKind.schedule,
+        ref.read(scheduleItemsProvider).length,
+      )) {
+    await showUpgradeSheet(context);
+    return null;
+  }
   return showAethelSheet<FocusSchedule>(
     context: context,
     builder: (sheetContext) => _ScheduleEditorSheet(
@@ -132,6 +143,11 @@ class _ScheduleEditorSheetState extends State<_ScheduleEditorSheet> {
       final saved = await widget.actions.saveSchedule(schedule);
       if (!mounted) return;
       Navigator.of(context).pop(saved);
+    } on FreeLimitExceededException catch (_) {
+      if (!mounted) return;
+      final navigator = Navigator.of(context);
+      navigator.pop();
+      await showUpgradeSheet(navigator.context);
     } catch (error) {
       if (!mounted) return;
       setState(() {

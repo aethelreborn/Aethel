@@ -7,6 +7,8 @@ import '../../../app_providers.dart';
 import '../../../core/network/sync_service.dart';
 import '../../../core/platform/permission_catalog.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../premium/premium_controller.dart';
+import '../../premium/upgrade_sheet.dart';
 import '../../../widgets/page.dart';
 import '../../../widgets/password_strength.dart';
 import '../../../widgets/paper.dart';
@@ -23,6 +25,7 @@ class SettingsScreen extends ConsumerWidget {
     final session = ref.watch(sessionControllerProvider);
     final settings = ref.watch(settingsControllerProvider);
     final sync = ref.watch(syncStatusProvider).value;
+    final premium = ref.watch(premiumControllerProvider);
     final profile = session.profile;
     final name = (profile?.name.trim().isNotEmpty ?? false)
         ? profile!.name.trim()
@@ -125,7 +128,21 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          _Section(
+            title: 'Plan',
+            children: [
+              _Row(
+                icon: Icons.workspace_premium_outlined,
+                title: 'Aethel Premium',
+                subtitle: _premiumLabel(premium),
+                onTap: () => showUpgradeSheet(context),
+                trailing:
+                    Icon(Icons.chevron_right_rounded, color: palette.muted),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           _Section(
             title: 'Appearance',
             children: [
@@ -342,6 +359,19 @@ class SettingsScreen extends ConsumerWidget {
       return 'Last synced ${DateFormat('d MMM, HH:mm').format(sync.lastSync!)}';
     }
     return 'Waiting for the first sync.';
+  }
+
+  String _premiumLabel(PremiumState premium) {
+    if (premium.isPremium) {
+      final expiresAt = premium.expiresAt;
+      return expiresAt == null
+          ? 'Active on this account.'
+          : 'Active · renews ${DateFormat('d MMM yyyy').format(expiresAt)}';
+    }
+    if (premium.pendingOrderId != null) {
+      return 'Waiting for payment confirmation.';
+    }
+    return 'Free plan · 15 entries, 5 bills, 1 schedule';
   }
 
   Future<void> _signOut(BuildContext context, WidgetRef ref) async {

@@ -7,6 +7,7 @@ import authRoutes from './modules/auth/auth.routes.js';
 import vaultRoutes from './modules/vault/vault.routes.js';
 import billingRoutes from './modules/billing/billing.routes.js';
 import schedulesRoutes from './modules/schedules/schedules.routes.js';
+import paymentsRoutes from './modules/payments/payments.routes.js';
 import { deviceRoutes, timelineRoutes } from './modules/notifications/notifications.routes.js';
 import { errorHandler } from './middleware/errorHandler.middleware.js';
 import { DueDateCheckJob } from './jobs/dueDateCheck.job.js';
@@ -26,6 +27,11 @@ app.use(cors({
   origin: true,
   credentials: false,
 }));
+
+// /payments is mounted before the global express.json() because its /webhook
+// route must read the raw request body bytes for HMAC verification; re-parsing
+// and re-serializing JSON would break the signature. Other modules mount below.
+app.use('/payments', paymentsRoutes);
 
 app.use(express.json({ limit: '256kb' }));
 

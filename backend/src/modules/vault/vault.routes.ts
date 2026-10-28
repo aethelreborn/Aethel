@@ -26,6 +26,10 @@ router.post('/', authMiddleware, rejectPlaintext, validateBody(vaultBaseSchema),
     const item = await vaultService.create(req.userId as string, req.body);
     res.status(201).json(item);
   } catch (err: any) {
+    if (err?.code === 'FREE_LIMIT_REACHED') {
+      res.status(403).json({ error: err.message, code: err.code, limit: err.limit, resource: err.resource });
+      return;
+    }
     res.status(409).json({ error: err.message });
   }
 });

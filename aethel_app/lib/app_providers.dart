@@ -11,6 +11,7 @@ import 'core/storage/secure_store.dart';
 import 'data/data_actions.dart';
 import 'data/models.dart';
 import 'features/auth/controllers/session_controller.dart';
+import 'features/premium/premium_controller.dart';
 import 'features/settings/controllers/settings_controller.dart';
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
@@ -88,7 +89,18 @@ final focusSessionsProvider = Provider<List<FocusSession>>((ref) {
 
 final shellIndexProvider = StateProvider<int>((ref) => 0);
 
-final dataActionsProvider = Provider<DataActions>((ref) => DataActions());
+/// Defensive cap enforcement at the data layer. The screens also gate the
+/// "add" taps so the upgrade sheet appears instead of an exception, but a
+/// create can never slip past this even if a new call site forgets.
+final dataActionsProvider = Provider<DataActions>((ref) {
+  return DataActions(
+    createGate: (kind, count) => canCreateWithState(
+      ref.read(premiumControllerProvider),
+      kind,
+      count,
+    ),
+  );
+});
 
 /// Rebuilds the scheduled reminders whenever schedules or bills change, so
 /// what the platform has queued always mirrors the vault.

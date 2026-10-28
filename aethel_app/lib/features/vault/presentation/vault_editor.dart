@@ -7,6 +7,8 @@ import '../../../app_providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/data_actions.dart';
 import '../../../data/models.dart';
+import '../../premium/premium_controller.dart';
+import '../../premium/upgrade_sheet.dart';
 import '../../../widgets/page.dart';
 import '../../../widgets/sheets.dart';
 import 'password_generator.dart';
@@ -16,7 +18,16 @@ Future<VaultItem?> showVaultEditor(
   WidgetRef ref, {
   VaultItem? item,
   VaultType initialType = VaultType.password,
-}) {
+}) async {
+  if (item == null &&
+      !canCreateWithState(
+        ref.read(premiumControllerProvider),
+        PremiumKind.vaultItem,
+        ref.read(vaultItemsProvider).length,
+      )) {
+    await showUpgradeSheet(context);
+    return null;
+  }
   return showAethelSheet<VaultItem>(
     context: context,
     builder: (sheetContext) => _VaultEditorSheet(
@@ -140,6 +151,11 @@ class _VaultEditorSheetState extends State<_VaultEditorSheet> {
       final saved = await widget.actions.saveVault(item);
       if (!mounted) return;
       Navigator.of(context).pop(saved);
+    } on FreeLimitExceededException catch (_) {
+      if (!mounted) return;
+      final navigator = Navigator.of(context);
+      navigator.pop();
+      await showUpgradeSheet(navigator.context);
     } catch (error) {
       if (!mounted) return;
       setState(() {

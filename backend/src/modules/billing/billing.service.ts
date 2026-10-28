@@ -1,5 +1,6 @@
 import { prisma } from '../../config/db.js';
 import { syncGateway } from '../../websocket/syncGateway.js';
+import { assertCanCreate } from '../payments/entitlement.js';
 import { addDays, addWeeks, addMonths } from 'date-fns';
 
 export class BillingService {
@@ -8,6 +9,7 @@ export class BillingService {
   }
 
   async create(userId: string, data: any) {
+    await assertCanCreate(userId, 'billingItems', () => prisma.billingItem.count({ where: { userId } }));
     const item = await prisma.billingItem.create({
       data: {
         ...(data.id ? { id: data.id } : {}),

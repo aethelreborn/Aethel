@@ -5,10 +5,14 @@ import '../config/app_config.dart';
 import '../storage/secure_store.dart';
 
 class ApiException implements Exception {
-  const ApiException(this.message, {this.statusCode});
+  const ApiException(this.message, {this.statusCode, this.code});
 
   final String message;
   final int? statusCode;
+
+  /// Machine-readable code from the server's JSON body (e.g. `FREE_LIMIT_REACHED`),
+  /// when present. Callers branch on this instead of matching message text.
+  final String? code;
 
   bool get isOffline => statusCode == null;
 
@@ -178,9 +182,12 @@ class ApiClient {
     final status = error.response?.statusCode;
     final data = error.response?.data;
     String? message;
+    String? code;
     if (data is Map) {
       final value = data['error'] ?? data['message'];
       if (value is String && value.trim().isNotEmpty) message = value;
+      final rawCode = data['code'];
+      if (rawCode is String && rawCode.trim().isNotEmpty) code = rawCode;
     }
     // A build compiled without a vault server address can only reach
     // localhost, which fails as a connection error or a timeout depending on
@@ -220,6 +227,6 @@ class ApiClient {
           message = 'Something interrupted the connection. Try again.';
       }
     }
-    return ApiException(message, statusCode: status);
+    return ApiException(message, statusCode: status, code: code);
   }
 }

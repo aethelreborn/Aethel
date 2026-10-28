@@ -60,6 +60,11 @@ class SyncService {
   Timer? _debounceTimer;
   bool _syncing = false;
 
+  /// Called when the server rejects a push with the free-plan cap
+  /// (403 FREE_LIMIT_REACHED), so the premium state can be re-fetched and
+  /// the UI can offer the upgrade sheet instead of a raw error.
+  void Function()? onFreeLimitReached;
+
   bool get isRunning => _token != null;
 
   void bump() {
@@ -127,10 +132,16 @@ class SyncService {
       bump();
       if (_hasPending) _scheduleSync();
     } on ApiException catch (error) {
+      final freeLimit =
+          error.statusCode == 403 && error.code == 'FREE_LIMIT_REACHED';
       status.value = status.value.copyWith(
         syncing: false,
-        error: error.message,
+        error: freeLimit
+            ? 'The free plan limit was reached on the server. Remove an '
+                'item or upgrade to Premium.'
+            : error.message,
       );
+      if (freeLimit) onFreeLimitReached?.call();
     } catch (_) {
       status.value = status.value.copyWith(
         syncing: false,

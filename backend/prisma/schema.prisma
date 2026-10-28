@@ -35,6 +35,8 @@ model User {
   passwordHash  String
   tokenVersion  Int                 @default(0) @map("token_version")
   createdAt     DateTime            @default(now()) @map("created_at")
+  plan          String              @default("free")
+  planExpiresAt DateTime?           @map("plan_expires_at")
 
   vaultItems       VaultItem[]
   billingItems     BillingItem[]
@@ -141,4 +143,18 @@ model NotificationLog {
 
   @@index([userId], name: "notification_logs_userId_idx")
   @@map("notification_logs")
+}
+
+model PaymentEvent {
+  id          String   @id @default(uuid())
+  userId      String
+  orderId     String
+  paymentId   String?
+  event       String
+  deliveryId  String   @unique
+  amountPaise Int?
+  createdAt   DateTime @default(now())
+
+  @@index([orderId])
+  @@index([userId])
 }

@@ -1,30 +1,41 @@
-# Aethel — Render blueprint
-# https://render.com — free web service, sleeps after inactivity;
-# .github/workflows/keepalive.yml pings /api/health every 10 min to prevent sleep.
 services:
   - type: web
     name: aethel-api
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile.production
+    runtime: node
     plan: free
-    healthCheckPath: /api/health
-    autoDeploy: true
+    region: singapore
+    rootDir: backend
+    buildFilter:
+      paths:
+        - backend/**
+        - render.yaml
+    buildCommand: npm ci && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && node dist/server.js
+    healthCheckPath: /health
     envVars:
-      # Set from the Supabase transaction-pooler string after project creation
-      # (Render dashboard → Environment → DATABASE_URL) — never committed.
+      - key: NODE_ENV
+        value: production
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: aethel-db
+          property: connectionString
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
-      - key: NODE_ENV
-        value: production
-      # Render free instances listen on $PORT.
-      - key: PORT
-        value: "10000"
-      # Filled in once the Vercel dashboard URL is known.
       - key: FRONTEND_URL
+        value: https://aethelreborn.github.io/Aethel/
+      - key: AETHEL_PAY_GATEWAY_URL
+        value: https://aethelpay.vercel.app
+      - key: AETHEL_PAY_MERCHANT_ID
+        value: 00000000-0000-0000-0000-000000000001
+      - key: AETHEL_PAY_MERCHANT_KEY
         sync: false
-      - key: CORS_ORIGINS
-        sync: false
+      - key: AETHEL_PAY_RETURN_URL
+        value: https://aethelreborn.github.io/Aethel/
+
+databases:
+  - name: aethel-db
+    plan: free
+    databaseName: aethel
+    user: aethel

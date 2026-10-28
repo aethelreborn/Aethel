@@ -1,7 +1,7 @@
 # Aethel — Architecture
 
 **Last updated:** 2026-09-20
-**Read with:** `PRD.md` (requirements), `TASKS.md` (known gaps → fixes), `RULES.md` (conventions)
+**Read with:** `PRD.md` (requirements)
 **Legend:** ✅ implemented · 🟡 partial/stub · ❌ missing · 💀 dead code (not reachable)
 
 ---
@@ -47,10 +47,7 @@ Aethel/
 ├── docs/                    # this documentation set
 │   ├── PRD.md               # product requirements
 │   ├── ARCHITECTURE.md      # this file
-│   ├── RULES.md             # engineering + security rules
-│   ├── DESIGN.md            # design system + UX
-│   ├── TASKS.md             # work tracker
-│   └── MEMORY.md            # AI/agent persistent memory
+│   └── DESIGN.md            # design system + UX
 ├── aethel_app/                 # Flutter frontend
 ├── backend/                 # Node.js + TypeScript backend
 ├── docker-compose.yml       # PostgreSQL 16 service
